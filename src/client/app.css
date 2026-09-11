@@ -1,0 +1,33 @@
+:root,
+body,
+#root {
+  min-height: 100%;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+}
+
+body {
+  min-width: 320px;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.top-toolbar {
+  display: flex;
+  align-items: center;
+}
+
+.top-toolbar .ant-typography {
+  margin: 0;
+  color: #fff;
+}
+
+.request-workspace {
+  padding: 24px;
+}
