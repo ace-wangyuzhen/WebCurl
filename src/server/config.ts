@@ -46,6 +46,11 @@ function parseInteger(
 export function loadConfig(
   env: NodeJS.ProcessEnv = process.env,
 ): ServerConfig {
+  const host = env.HOST ?? DEFAULT_CONFIG.host;
+  if (host.trim() === "") {
+    throw new Error("Invalid HOST: expected a non-empty value");
+  }
+
   const port = parseInteger("PORT", env.PORT, DEFAULT_CONFIG.port, 1);
   if (port > 65_535) {
     throw new Error(
@@ -54,7 +59,7 @@ export function loadConfig(
   }
 
   return {
-    host: env.HOST ?? DEFAULT_CONFIG.host,
+    host: host.trim(),
     port,
     requestTimeoutMs: parseInteger(
       "REQUEST_TIMEOUT_MS",

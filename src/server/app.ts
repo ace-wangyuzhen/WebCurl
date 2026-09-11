@@ -3,18 +3,27 @@ import fastify, {
   type FastifyServerOptions,
 } from "fastify";
 import helmet from "@fastify/helmet";
-import { DEFAULT_CONFIG } from "./config";
+import {
+  DEFAULT_CONFIG,
+  type ServerConfig,
+} from "./config";
 import { AppError, type ErrorCode } from "./errors";
 import { registerHealthRoute } from "./health/health-route";
 
+declare module "fastify" {
+  interface FastifyInstance {
+    config: ServerConfig;
+    staticRoot?: string;
+  }
+}
+
 export interface BuildAppOptions extends FastifyServerOptions {
-  maxRequestBodyBytes?: number;
+  config?: ServerConfig;
   staticRoot?: string;
 }
 
-interface FastifyErrorLike extends Error {
-  code?: string;
-  statusCode?: number;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
 function getErrorResponse(error: unknown): {
@@ -30,15 +39,22 @@ function getErrorResponse(error: unknown): {
     };
   }
 
-  const fastifyError = error as FastifyErrorLike;
+  const fastifyError = isRecord(error) ? error : undefined;
+  const statusCode = fastifyError?.statusCode;
+  const message =
+    typeof fastifyError?.message === "string"
+      ? fastifyError.message
+      : undefined;
+
   if (
-    typeof fastifyError.statusCode === "number" &&
-    fastifyError.statusCode < 500
+    typeof statusCode === "number" &&
+    statusCode >= 400 &&
+    statusCode < 500
   ) {
     return {
       code: "INVALID_REQUEST",
-      message: fastifyError.message,
-      statusCode: fastifyError.statusCode,
+      message: message ?? "Invalid request",
+      statusCode,
     };
   }
 
@@ -52,14 +68,20 @@ function getErrorResponse(error: unknown): {
 export async function buildApp(
   options: BuildAppOptions = {},
 ): Promise<FastifyInstance> {
-  const { maxRequestBodyBytes, staticRoot, ...fastifyOptions } = options;
+  const {
+    config = DEFAULT_CONFIG,
+    staticRoot,
+    ...fastifyOptions
+  } = options;
   const app = fastify({
     ...fastifyOptions,
-    bodyLimit: maxRequestBodyBytes ?? DEFAULT_CONFIG.maxRequestBodyBytes,
+    bodyLimit: config.maxRequestBodyBytes,
   });
 
-  // Reserved for Task 9 static hosting without changing the API boundary.
-  void staticRoot;
+  app.decorate("config", config);
+  if (staticRoot !== undefined) {
+    app.decorate("staticRoot", staticRoot);
+  }
 
   app.setErrorHandler((error, _request, reply) => {
     const normalizedError = getErrorResponse(error);
@@ -72,9 +94,18 @@ export async function buildApp(
     });
   });
 
-  await app.register(helmet);
+  app.setNotFoundHandler((_request, reply) => {
+    reply.status(404).send({
+      ok: false,
+      error: {
+        code: "INVALID_REQUEST",
+        message: "Route not found",
+      },
+    });
+  });
+
+  app.register(helmet);
   registerHealthRoute(app);
-  await app.ready();
 
   return app;
 }

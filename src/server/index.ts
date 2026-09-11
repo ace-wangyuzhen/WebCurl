@@ -5,7 +5,7 @@ import { loadConfig } from "./config";
 export async function start(): Promise<void> {
   const config = loadConfig();
   const app = await buildApp({
-    maxRequestBodyBytes: config.maxRequestBodyBytes,
+    config,
   });
 
   try {
