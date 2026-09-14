@@ -124,16 +124,26 @@ export function RequestWorkspace() {
     runtime.startSend();
 
     try {
+      // Resolve {{...}} from the environment/globals BEFORE running the
+      // pre-request script, so scripts observe the substituted request.
+      const initialVariables = mergeVariables(globals, environment);
+      const substitutedRequest = substituteVariables(
+        request,
+        initialVariables,
+      ).value;
+
       const scriptResult = await runPreRequestScripts(
         scriptSources,
-        request,
+        substitutedRequest,
         globals,
         environment,
         { executor: createWorkerScriptExecutor() },
       );
       runtime.appendLogs(scriptResult.logs);
 
-      // Environment variables take precedence over globals for {{...}}.
+      // A script may set variables or change the request; resolve again so any
+      // remaining {{...}} reflects the final state. Environment variables take
+      // precedence over globals.
       const variables = mergeVariables(
         scriptResult.globals,
         scriptResult.environment,
