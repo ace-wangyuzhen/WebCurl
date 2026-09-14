@@ -3,6 +3,7 @@ dist/
 coverage/
 playwright-report/
 test-results/
+web-curl.tar.gz
 .env
 .env.*
 !.env.example

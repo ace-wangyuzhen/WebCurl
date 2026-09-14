@@ -10,6 +10,7 @@
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build",
     "build:server": "tsup src/server/index.ts --format esm --out-dir dist/server --sourcemap",
+    "package": "npm run build && bash scripts/pack.sh",
     "start": "node dist/server/index.js",
     "test": "vitest run",
     "test:watch": "vitest",

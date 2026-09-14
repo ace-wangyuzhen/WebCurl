@@ -8,7 +8,7 @@ the server is stateless and only validates and executes one request at a time.
 ## Requirements
 
 - Node.js 24 (the installer fails clearly on any other major version).
-- Linux with `systemd` for the managed service install.
+- `wget` and `tar` for the `scripts/install.sh` deploy.
 
 ## Development
 
@@ -32,17 +32,39 @@ frontend (`dist/client`) and the `/api/*` routes.
 
 ## Deploy
 
+`scripts/install.sh` fetches a packaged build from BOS, unpacks it, and runs the
+server in the background with `nohup`. It picks the first free port starting at
+`8359` (incrementing until one is free), writes logs to `app.log`, and records
+the background process id in `app.pid`.
+
+Pass the archive URL via the `BOS_URL` environment variable, or as the first
+argument:
+
 ```bash
-./scripts/install.sh
-sudo systemctl status web-curl
-curl http://127.0.0.1:8080/api/health
+BOS_URL="https://<bucket>.bcebos.com/web-curl.tar.gz" ./scripts/install.sh
+# equivalently:
+./scripts/install.sh "https://<bucket>.bcebos.com/web-curl.tar.gz"
 ```
 
-Remove the managed service with:
+When the health check passes the script prints the address it is serving on
+(for example `http://127.0.0.1:8359`). Check health or stop the process with:
 
 ```bash
-./scripts/uninstall.sh
+curl http://127.0.0.1:8359/api/health
+kill "$(cat app.pid)"
 ```
+
+Optional environment variables:
+
+- `BOS_URL` — URL of the `.tar.gz` build archive (required).
+- `APP_HOME` — download and run directory (default: the script's own directory).
+- `PORT_BASE` — first port to try (default `8359`).
+- `HOST` — bind and health-check host (default `127.0.0.1`).
+- `ENTRY` — server entrypoint inside the archive (default `dist/server/index.js`).
+- `MAX_PORT_TRIES` — ports to try before giving up (default `100`).
+
+The archive must contain the built app and its dependencies (`dist/` and
+`node_modules`) so the script can run `node dist/server/index.js` directly.
 
 ## Configuration
 
