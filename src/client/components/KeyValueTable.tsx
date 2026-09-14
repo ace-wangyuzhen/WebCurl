@@ -1,5 +1,10 @@
-import { Button, Checkbox, Input, Table } from "antd";
-import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
+import { useState } from "react";
+import { Button, Checkbox, Input, Modal, Table, Tooltip } from "antd";
+import {
+  DeleteOutlined,
+  ExpandAltOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
 import type { KeyValueItem } from "../../shared/request-types";
 import { createId } from "../db/database";
 import { useTranslation } from "../i18n";
@@ -22,6 +27,10 @@ export function KeyValueTable({
   enableLabel,
 }: KeyValueTableProps) {
   const { t } = useTranslation();
+  const [expandTarget, setExpandTarget] = useState<{
+    id: string;
+    value: string;
+  } | null>(null);
 
   const updateItem = (id: string, patch: Partial<KeyValueItem>) => {
     onChange(items.map((item) => (item.id === id ? { ...item, ...patch } : item)));
@@ -69,10 +78,25 @@ export function KeyValueTable({
       dataIndex: "value",
       render: (_value: unknown, record: KeyValueItem, index: number) => (
         <Input
+          className="kv-value-input"
           value={record.value}
           aria-label={valueLabel(index + 1)}
           onChange={(event) =>
             updateItem(record.id, { value: event.target.value })
+          }
+          suffix={
+            <Tooltip title={t("table.expand")}>
+              <Button
+                className="kv-value-expand"
+                type="text"
+                size="small"
+                icon={<ExpandAltOutlined />}
+                aria-label={t("table.expandAria", { n: index + 1 })}
+                onClick={() =>
+                  setExpandTarget({ id: record.id, value: record.value })
+                }
+              />
+            </Tooltip>
           }
         />
       ),
@@ -107,6 +131,31 @@ export function KeyValueTable({
       >
         {addLabel}
       </Button>
+
+      <Modal
+        title={t("table.expandTitle")}
+        open={expandTarget !== null}
+        onOk={() => {
+          if (expandTarget) {
+            updateItem(expandTarget.id, { value: expandTarget.value });
+          }
+          setExpandTarget(null);
+        }}
+        onCancel={() => setExpandTarget(null)}
+        okText={t("common.ok")}
+        cancelText={t("common.cancel")}
+      >
+        <Input.TextArea
+          value={expandTarget?.value ?? ""}
+          onChange={(event) =>
+            setExpandTarget((prev) =>
+              prev ? { ...prev, value: event.target.value } : prev,
+            )
+          }
+          aria-label={t("table.expandTitle")}
+          autoSize={{ minRows: 6, maxRows: 18 }}
+        />
+      </Modal>
     </div>
   );
 }

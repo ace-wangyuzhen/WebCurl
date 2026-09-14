@@ -16,12 +16,15 @@ import {
 } from "antd";
 import type { MenuProps } from "antd";
 import {
+  ContainerOutlined,
   CopyOutlined,
   DeleteOutlined,
   EditOutlined,
   ExportOutlined,
   FileAddOutlined,
   FolderAddOutlined,
+  FolderOutlined,
+  ImportOutlined,
   MoreOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
@@ -35,6 +38,7 @@ import {
   folderRepository,
   requestRepository,
 } from "../db/repositories";
+import { parseCurlCommand } from "../api/parse-curl";
 import { useTranslation } from "../i18n";
 import { useEditorStore } from "../state/editor-store";
 
@@ -46,6 +50,7 @@ interface TreeDataNode {
   name: string;
   kind: TreeNodeKind;
   collectionId: string;
+  method?: string;
   children?: TreeDataNode[];
   isLeaf?: boolean;
 }
@@ -86,6 +91,7 @@ function buildCollectionTree(
               name: request.name,
               kind: "request" as const,
               collectionId: request.collectionId,
+              method: request.method,
               isLeaf: true,
             })),
         ],
@@ -110,6 +116,7 @@ function buildCollectionTree(
           name: request.name,
           kind: "request" as const,
           collectionId: request.collectionId,
+          method: request.method,
           isLeaf: true,
         })),
     ],
@@ -141,6 +148,11 @@ interface MoveCopyTarget {
   name: string;
 }
 
+interface CurlImportTarget {
+  collectionId: string;
+  folderId: string | null;
+}
+
 export function CollectionSidebar() {
   const { t } = useTranslation();
   const [collections, setCollections] = useState<CollectionRecord[]>([]);
@@ -155,6 +167,12 @@ export function CollectionSidebar() {
     null,
   );
   const [targetId, setTargetId] = useState<string | null>(null);
+  const [curlImportTarget, setCurlImportTarget] =
+    useState<CurlImportTarget | null>(null);
+  const [curlText, setCurlText] = useState("");
+  const [curlName, setCurlName] = useState("");
+  const [curlNameEdited, setCurlNameEdited] = useState(false);
+  const [curlError, setCurlError] = useState<string | null>(null);
 
   const selectedRequestId = useEditorStore((state) => state.selectedRequestId);
   const selectedFolderId = useEditorStore((state) => state.selectedFolderId);
@@ -448,6 +466,79 @@ export function CollectionSidebar() {
     await load();
   };
 
+  const deriveCurlName = (rawUrl: string): string => {
+    try {
+      const path = new URL(rawUrl).pathname;
+      return path && path !== "/" ? path : rawUrl;
+    } catch {
+      const withoutQuery = rawUrl.split("?")[0];
+      return withoutQuery || rawUrl;
+    }
+  };
+
+  const openCurlImport = (collectionId: string, folderId: string | null) => {
+    setCurlImportTarget({ collectionId, folderId });
+    setCurlText("");
+    setCurlName("");
+    setCurlNameEdited(false);
+    setCurlError(null);
+  };
+
+  const handleCurlTextChange = (value: string) => {
+    setCurlText(value);
+    setCurlError(null);
+    if (!curlNameEdited) {
+      try {
+        const parsed = parseCurlCommand(value);
+        setCurlName(deriveCurlName(parsed.url));
+      } catch {
+        setCurlName("");
+      }
+    }
+  };
+
+  const confirmCurlImport = async () => {
+    if (!curlImportTarget) {
+      return;
+    }
+    let parsed;
+    try {
+      parsed = parseCurlCommand(curlText);
+    } catch {
+      setCurlError(t("curlImport.error"));
+      return;
+    }
+
+    const name = curlName.trim() || deriveCurlName(parsed.url);
+    const created = await requestRepository.create({
+      collectionId: curlImportTarget.collectionId,
+      folderId: curlImportTarget.folderId,
+      name,
+      method: parsed.method,
+      url: parsed.url,
+      queryParams: parsed.query,
+      headers: parsed.headers,
+      body: parsed.body,
+    });
+    setCurlImportTarget(null);
+
+    useEditorStore.getState().selectRequest({
+      collectionId: created.collectionId,
+      folderId: created.folderId,
+      requestId: created.id,
+      request: {
+        name: created.name,
+        method: created.method,
+        url: created.url,
+        queryParams: created.queryParams,
+        headers: created.headers,
+        body: created.body,
+        preRequestScript: created.preRequestScript,
+      },
+    });
+    await load();
+  };
+
   const buildTargetTree = (includeFolders: boolean): TargetTreeNode[] => {
     const folderNodes = (
       collectionId: string,
@@ -608,6 +699,11 @@ export function CollectionSidebar() {
         label: t("tree.newRequest"),
         icon: <FileAddOutlined />,
       });
+      items.push({
+        key: "import-curl",
+        label: t("curlImport.menu"),
+        icon: <ImportOutlined />,
+      });
       items.push({ type: "divider" });
       items.push({ key: "rename",         label: t("common.rename"), icon: <EditOutlined /> });
     } else if (kind === "folder") {
@@ -615,6 +711,11 @@ export function CollectionSidebar() {
         key: "new-request",
         label: t("tree.newRequest"),
         icon: <FileAddOutlined />,
+      });
+      items.push({
+        key: "import-curl",
+        label: t("curlImport.menu"),
+        icon: <ImportOutlined />,
       });
       items.push({ type: "divider" });
       items.push({
@@ -653,6 +754,11 @@ export function CollectionSidebar() {
             kind === "collection" ? key : collectionId,
             kind === "folder" ? key : null,
           );
+        } else if (actionKey === "import-curl") {
+          openCurlImport(
+            kind === "collection" ? key : collectionId,
+            kind === "folder" ? key : null,
+          );
         } else if (actionKey === "move" || actionKey === "copy") {
           setMoveCopyTarget({
             kind: kind === "request" ? "request" : "folder",
@@ -670,9 +776,23 @@ export function CollectionSidebar() {
     };
   };
 
+  const renderNodeMarker = (node: TreeDataNode) => {
+    if (node.kind === "request") {
+      const method = (node.method ?? "GET").toUpperCase();
+      return (
+        <span className="tree-node-method" data-method={method} aria-hidden>
+          {method}
+        </span>
+      );
+    }
+    const Icon = node.kind === "collection" ? ContainerOutlined : FolderOutlined;
+    return <Icon className="tree-node-icon" aria-hidden />;
+  };
+
   const renderTitle = (node: TreeDataNode) => {
     return (
       <span className="tree-node-title">
+        {renderNodeMarker(node)}
         <span className="tree-node-label">{node.name}</span>
         <Dropdown menu={buildMenu(node)} trigger={["click"]}>
           <Button
@@ -764,6 +884,7 @@ export function CollectionSidebar() {
           />
         ) : (
           <Tree
+            blockNode
             treeData={treeData}
             selectedKeys={selectedKey ? [selectedKey] : []}
             defaultExpandAll
@@ -833,6 +954,37 @@ export function CollectionSidebar() {
           treeDefaultExpandAll
           aria-label={t("tree.destination")}
         />
+      </Modal>
+
+      <Modal
+        title={t("curlImport.title")}
+        open={curlImportTarget !== null}
+        onOk={() => void confirmCurlImport()}
+        onCancel={() => setCurlImportTarget(null)}
+        okText={t("curlImport.confirm")}
+        okButtonProps={{ disabled: curlText.trim() === "" }}
+      >
+        <Space direction="vertical" size={12} style={{ width: "100%" }}>
+          <Input.TextArea
+            value={curlText}
+            onChange={(event) => handleCurlTextChange(event.target.value)}
+            placeholder={t("curlImport.placeholder")}
+            aria-label={t("curlImport.inputAria")}
+            autoSize={{ minRows: 6, maxRows: 14 }}
+          />
+          <Input
+            value={curlName}
+            onChange={(event) => {
+              setCurlName(event.target.value);
+              setCurlNameEdited(true);
+            }}
+            placeholder={t("curlImport.namePlaceholder")}
+            aria-label={t("curlImport.nameAria")}
+          />
+          {curlError ? (
+            <Alert type="error" message={curlError} showIcon />
+          ) : null}
+        </Space>
       </Modal>
     </aside>
   );

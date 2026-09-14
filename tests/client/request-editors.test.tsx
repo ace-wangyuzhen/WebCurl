@@ -57,3 +57,21 @@ it("selects a body type", async () => {
 
   expect(useEditorStore.getState().draft.body.type).toBe("json");
 });
+
+it("pretty-formats a JSON body on demand", async () => {
+  selectDraft({ body: { type: "json", content: '{"a":1,"b":[2,3]}' } });
+  render(<BodyEditor />);
+
+  await userEvent.click(screen.getByRole("button", { name: "Format" }));
+
+  expect(useEditorStore.getState().draft.body.content).toBe(
+    '{\n  "a": 1,\n  "b": [\n    2,\n    3\n  ]\n}',
+  );
+});
+
+it("disables JSON formatting when the body is invalid", () => {
+  selectDraft({ body: { type: "json", content: "{not json" } });
+  render(<BodyEditor />);
+
+  expect(screen.getByRole("button", { name: "Format" })).toBeDisabled();
+});

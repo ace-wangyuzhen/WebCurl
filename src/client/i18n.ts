@@ -21,6 +21,7 @@ const zh = {
   "common.cancel": "取消",
   "common.copy": "复制",
   "common.move": "移动",
+  "common.ok": "确定",
   "common.copySuffix": "（副本）",
   "toolbar.import": "导入工作区",
   "toolbar.export": "导出工作区",
@@ -58,6 +59,20 @@ const zh = {
   "tree.destination": "选择目标位置",
   "tree.actionsFor": "{name} 的操作",
 
+  // Import from curl
+  "curlImport.menu": "从 curl 导入请求",
+  "curlImport.title": "从 curl 导入请求",
+  "curlImport.confirm": "导入",
+  "curlImport.placeholder": "在此粘贴 curl 命令",
+  "curlImport.inputAria": "curl 命令",
+  "curlImport.namePlaceholder": "请求名称",
+  "curlImport.nameAria": "请求名称",
+  "curlImport.error": "无法解析该 curl 命令，请检查格式",
+
+  // Folder request list
+  "folder.requests": "接口列表",
+  "folder.noRequests": "这个文件夹还没有接口。右键文件夹可新建请求或从 curl 导入。",
+
   // Request toolbar
   "request.method": "HTTP 方法",
   "request.url": "请求 URL",
@@ -74,6 +89,9 @@ const zh = {
   "table.name": "名称",
   "table.value": "值",
   "table.deleteRow": "删除行",
+  "table.expand": "最大化编辑",
+  "table.expandAria": "最大化编辑值 {n}",
+  "table.expandTitle": "编辑值",
 
   // Params / headers editors
   "params.add": "添加参数",
@@ -92,6 +110,7 @@ const zh = {
   "body.formUrlencoded": "表单编码",
   "body.content": "正文内容",
   "body.invalidJson": "正文不是有效的 JSON",
+  "body.format": "格式化",
 
   // Script editor
   "script.label": "预请求脚本",
@@ -176,6 +195,7 @@ const en: Record<keyof typeof zh, string> = {
   "common.cancel": "Cancel",
   "common.copy": "Copy",
   "common.move": "Move",
+  "common.ok": "OK",
   "common.copySuffix": " (copy)",
   "toolbar.import": "Import workspace",
   "toolbar.export": "Export workspace",
@@ -210,6 +230,17 @@ const en: Record<keyof typeof zh, string> = {
   "tree.copyTitle": "Copy {name}",
   "tree.destination": "Select destination",
   "tree.actionsFor": "Actions for {name}",
+  "curlImport.menu": "Import from curl",
+  "curlImport.title": "Import request from curl",
+  "curlImport.confirm": "Import",
+  "curlImport.placeholder": "Paste your curl command here",
+  "curlImport.inputAria": "curl command",
+  "curlImport.namePlaceholder": "Request name",
+  "curlImport.nameAria": "Request name",
+  "curlImport.error": "Could not parse this curl command. Please check the format.",
+  "folder.requests": "Requests",
+  "folder.noRequests":
+    "This folder has no requests yet. Right-click the folder to add one or import from curl.",
   "request.method": "HTTP method",
   "request.url": "Request URL",
   "request.urlPlaceholder": "Enter request URL",
@@ -223,6 +254,9 @@ const en: Record<keyof typeof zh, string> = {
   "table.name": "Name",
   "table.value": "Value",
   "table.deleteRow": "Delete row",
+  "table.expand": "Expand editor",
+  "table.expandAria": "Expand value editor {n}",
+  "table.expandTitle": "Edit value",
   "params.add": "Add parameter",
   "params.name": "Query parameter name {n}",
   "params.value": "Query parameter value {n}",
@@ -237,6 +271,7 @@ const en: Record<keyof typeof zh, string> = {
   "body.formUrlencoded": "Form URL Encoded",
   "body.content": "Body content",
   "body.invalidJson": "Body is not valid JSON",
+  "body.format": "Format",
   "script.label": "Pre-request script",
   "script.logs": "Script logs",
   "entity.collection": "Collection",
