@@ -1,18 +1,14 @@
 import { Tabs } from "antd";
-
-function EditorPlaceholder({ label }: { label: string }) {
-  return (
-    <div className="editor-placeholder" role="group" aria-label={label}>
-      {label} editor will appear here.
-    </div>
-  );
-}
+import { ParamsEditor } from "./ParamsEditor";
+import { HeadersEditor } from "./HeadersEditor";
+import { BodyEditor } from "./BodyEditor";
+import { ScriptEditor } from "./ScriptEditor";
 
 const TAB_ITEMS = [
-  { key: "params", label: "Params", children: <EditorPlaceholder label="Params" /> },
-  { key: "headers", label: "Headers", children: <EditorPlaceholder label="Headers" /> },
-  { key: "body", label: "Body", children: <EditorPlaceholder label="Body" /> },
-  { key: "scripts", label: "Scripts", children: <EditorPlaceholder label="Scripts" /> },
+  { key: "params", label: "Params", children: <ParamsEditor /> },
+  { key: "headers", label: "Headers", children: <HeadersEditor /> },
+  { key: "body", label: "Body", children: <BodyEditor /> },
+  { key: "scripts", label: "Scripts", children: <ScriptEditor /> },
 ];
 
 export function RequestTabs() {

@@ -1,5 +1,9 @@
 import { Button, Input, Select } from "antd";
-import { CloseOutlined, SendOutlined } from "@ant-design/icons";
+import {
+  CloseOutlined,
+  SendOutlined,
+  WarningOutlined,
+} from "@ant-design/icons";
 import { useEditorStore } from "../state/editor-store";
 import { useRuntimeStore } from "../state/runtime-store";
 
@@ -11,35 +15,47 @@ export function RequestToolbar() {
   const draft = useEditorStore((state) => state.draft);
   const updateDraft = useEditorStore((state) => state.updateDraft);
   const isSending = useRuntimeStore((state) => state.isSending);
+  const unresolvedVariables = useRuntimeStore(
+    (state) => state.unresolvedVariables,
+  );
 
   return (
-    <div className="request-toolbar">
-      <Select
-        className="method-select"
-        value={draft.method}
-        options={METHOD_OPTIONS}
-        onChange={(method) => updateDraft({ method })}
-        aria-label="HTTP method"
-      />
-      <Input
-        className="url-input"
-        value={draft.url}
-        onChange={(event) => updateDraft({ url: event.target.value })}
-        placeholder="Enter request URL"
-        aria-label="Request URL"
-      />
-      <Button
-        type="primary"
-        icon={<SendOutlined />}
-        aria-label="Send request"
-        aria-busy={isSending}
-      >
-        Send
-      </Button>
-      {isSending ? (
-        <Button icon={<CloseOutlined />} aria-label="Cancel request">
-          Cancel
+    <div>
+      <div className="request-toolbar">
+        <Select
+          className="method-select"
+          value={draft.method}
+          options={METHOD_OPTIONS}
+          onChange={(method) => updateDraft({ method })}
+          aria-label="HTTP method"
+        />
+        <Input
+          className="url-input"
+          value={draft.url}
+          onChange={(event) => updateDraft({ url: event.target.value })}
+          placeholder="Enter request URL"
+          aria-label="Request URL"
+        />
+        <Button
+          type="primary"
+          icon={<SendOutlined />}
+          aria-label="Send request"
+          aria-busy={isSending}
+        >
+          Send
         </Button>
+        {isSending ? (
+          <Button icon={<CloseOutlined />} aria-label="Cancel request">
+            Cancel
+          </Button>
+        ) : null}
+      </div>
+
+      {unresolvedVariables.length > 0 ? (
+        <div className="unresolved-warning" role="alert">
+          <WarningOutlined /> Unresolved variables:{" "}
+          {unresolvedVariables.join(", ")}
+        </div>
       ) : null}
     </div>
   );
