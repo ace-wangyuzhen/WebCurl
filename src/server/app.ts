@@ -9,6 +9,7 @@ import {
 } from "./config";
 import { AppError, type ErrorCode } from "./errors";
 import { registerHealthRoute } from "./health/health-route";
+import { registerExecuteRoute } from "./execute/execute-route";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -106,6 +107,7 @@ export async function buildApp(
 
   app.register(helmet);
   registerHealthRoute(app);
+  registerExecuteRoute(app);
 
   return app;
 }
