@@ -11,7 +11,12 @@ const METHOD_OPTIONS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTION
   (method) => ({ value: method, label: method }),
 );
 
-export function RequestToolbar() {
+interface RequestToolbarProps {
+  onSend: () => void;
+  onCancel: () => void;
+}
+
+export function RequestToolbar({ onSend, onCancel }: RequestToolbarProps) {
   const draft = useEditorStore((state) => state.draft);
   const updateDraft = useEditorStore((state) => state.updateDraft);
   const isSending = useRuntimeStore((state) => state.isSending);
@@ -41,11 +46,16 @@ export function RequestToolbar() {
           icon={<SendOutlined />}
           aria-label="Send request"
           aria-busy={isSending}
+          onClick={onSend}
         >
           Send
         </Button>
         {isSending ? (
-          <Button icon={<CloseOutlined />} aria-label="Cancel request">
+          <Button
+            icon={<CloseOutlined />}
+            aria-label="Cancel request"
+            onClick={onCancel}
+          >
             Cancel
           </Button>
         ) : null}

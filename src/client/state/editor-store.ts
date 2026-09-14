@@ -35,9 +35,11 @@ interface EditorState {
   selectedFolderId: string | null;
   selectedRequestId: string | null;
   draft: RequestDraft;
+  workspaceVersion: number;
   selectRequest: (selection: RequestSelection) => void;
   updateDraft: (patch: Partial<RequestDraft>) => void;
   clearSelection: () => void;
+  bumpWorkspaceVersion: () => void;
 }
 
 export const useEditorStore = create<EditorState>((set) => ({
@@ -45,6 +47,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   selectedFolderId: null,
   selectedRequestId: null,
   draft: createEmptyDraft(),
+  workspaceVersion: 0,
 
   selectRequest: ({ collectionId, folderId, requestId, request }) =>
     set({
@@ -64,4 +67,7 @@ export const useEditorStore = create<EditorState>((set) => ({
       selectedRequestId: null,
       draft: createEmptyDraft(),
     }),
+
+  bumpWorkspaceVersion: () =>
+    set((state) => ({ workspaceVersion: state.workspaceVersion + 1 })),
 }));

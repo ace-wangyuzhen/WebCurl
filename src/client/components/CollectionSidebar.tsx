@@ -81,6 +81,7 @@ export function CollectionSidebar() {
   const [error, setError] = useState<string | null>(null);
 
   const selectedRequestId = useEditorStore((state) => state.selectedRequestId);
+  const workspaceVersion = useEditorStore((state) => state.workspaceVersion);
   const cancelledRef = useRef(false);
 
   const load = useCallback(async () => {
@@ -122,7 +123,7 @@ export function CollectionSidebar() {
     return () => {
       cancelledRef.current = true;
     };
-  }, [load]);
+  }, [load, workspaceVersion]);
 
   const treeData = useMemo(
     () => buildCollectionTree(collections, folders, requests),
