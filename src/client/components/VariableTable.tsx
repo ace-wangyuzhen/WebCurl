@@ -1,6 +1,7 @@
 import { Button, Checkbox, Input, Table } from "antd";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import type { EnvironmentVariable } from "../db/database";
+import { useTranslation } from "../i18n";
 
 interface VariableTableProps {
   items: EnvironmentVariable[];
@@ -19,6 +20,8 @@ export function VariableTable({
   valueLabel,
   enableLabel,
 }: VariableTableProps) {
+  const { t } = useTranslation();
+
   const updateItem = (index: number, patch: Partial<EnvironmentVariable>) => {
     onChange(
       items.map((item, i) => (i === index ? { ...item, ...patch } : item)),
@@ -48,7 +51,7 @@ export function VariableTable({
       ),
     },
     {
-      title: "Name",
+      title: t("table.name"),
       render: (_value: unknown, record: EnvironmentVariable, index: number) => (
         <Input
           value={record.key}
@@ -58,7 +61,7 @@ export function VariableTable({
       ),
     },
     {
-      title: "Value",
+      title: t("table.value"),
       render: (_value: unknown, record: EnvironmentVariable, index: number) => (
         <Input
           value={record.value}
@@ -74,7 +77,7 @@ export function VariableTable({
         <Button
           type="text"
           icon={<DeleteOutlined />}
-          aria-label="Delete row"
+          aria-label={t("table.deleteRow")}
           onClick={() => removeItem(index)}
         />
       ),

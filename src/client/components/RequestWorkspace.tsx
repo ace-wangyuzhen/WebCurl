@@ -6,6 +6,7 @@ import { CollectionFolderEditor } from "./CollectionFolderEditor";
 import { CollectionVariablesPanel } from "./CollectionVariablesPanel";
 import type { RequestDefinition } from "../../shared/request-types";
 import { executeRequest, ClientRequestError } from "../api/execute-client";
+import { buildCurlCommand } from "../api/curl";
 import {
   collectionRepository,
   environmentRepository,
@@ -17,7 +18,10 @@ import {
   runPreRequestScripts,
   ScriptExecutionError,
 } from "../scripts/script-runner";
-import { substituteVariables } from "../scripts/variable-substitution";
+import {
+  mergeVariables,
+  substituteVariables,
+} from "../scripts/variable-substitution";
 import { useEditorStore } from "../state/editor-store";
 import { useRuntimeStore, type RuntimeError } from "../state/runtime-store";
 
@@ -126,12 +130,13 @@ export function RequestWorkspace() {
       runtime.appendLogs(scriptResult.logs);
 
       // Environment variables take precedence over globals for {{...}}.
-      const variables = {
-        ...scriptResult.globals,
-        ...scriptResult.environment,
-      };
+      const variables = mergeVariables(
+        scriptResult.globals,
+        scriptResult.environment,
+      );
       const substitution = substituteVariables(scriptResult.request, variables);
       runtime.setUnresolvedVariables(substitution.unresolved);
+      runtime.setActiveCurl(buildCurlCommand(substitution.value));
 
       const response = await executeRequest(
         substitution.value,
@@ -166,7 +171,10 @@ export function RequestWorkspace() {
       <div className="request-workspace-inner">
         <CollectionFolderEditor />
         {!selectedFolderId && selectedCollectionId ? (
-          <CollectionVariablesPanel collectionId={selectedCollectionId} />
+          <CollectionVariablesPanel
+            key={selectedCollectionId}
+            collectionId={selectedCollectionId}
+          />
         ) : null}
       </div>
     );

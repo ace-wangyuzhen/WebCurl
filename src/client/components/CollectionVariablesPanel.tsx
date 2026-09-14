@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Empty, Typography } from "antd";
+import { Empty, Tabs, Typography } from "antd";
 import type { EnvironmentRecord, EnvironmentVariable } from "../db/database";
 import {
   collectionRepository,
   environmentRepository,
 } from "../db/repositories";
+import { useTranslation } from "../i18n";
 import { useEditorStore } from "../state/editor-store";
 import { VariableTable } from "./VariableTable";
 
@@ -15,8 +16,10 @@ interface CollectionVariablesPanelProps {
 export function CollectionVariablesPanel({
   collectionId,
 }: CollectionVariablesPanelProps) {
+  const { t } = useTranslation();
   const [globals, setGlobals] = useState<EnvironmentVariable[]>([]);
   const [environments, setEnvironments] = useState<EnvironmentRecord[]>([]);
+  const [activeTab, setActiveTab] = useState<string | null>(null);
   const workspaceVersion = useEditorStore((state) => state.workspaceVersion);
 
   useEffect(() => {
@@ -43,57 +46,68 @@ export function CollectionVariablesPanel({
     void collectionRepository.update(collectionId, { globals: items });
   };
 
-  const handleEnvironmentVariablesChange = (items: EnvironmentVariable[]) => {
-    if (!activeEnvironment) {
-      return;
-    }
+  const handleEnvironmentVariablesChange = (
+    envId: string,
+    items: EnvironmentVariable[],
+  ) => {
     setEnvironments((prev) =>
       prev.map((env) =>
-        env.id === activeEnvironment.id ? { ...env, variables: items } : env,
+        env.id === envId ? { ...env, variables: items } : env,
       ),
     );
-    void environmentRepository.update(activeEnvironment.id, {
-      variables: items,
-    });
+    void environmentRepository.update(envId, { variables: items });
   };
 
   return (
     <div className="variables-panel">
       <section className="variables-section">
-        <Typography.Title level={5}>Globals</Typography.Title>
+        <Typography.Title level={5}>{t("vars.globals")}</Typography.Title>
         <Typography.Text type="secondary">
-          Available to scripts as <code>pm.globals.get("name")</code>.
+          {t("vars.globalsHint")}
         </Typography.Text>
         <VariableTable
           items={globals}
           onChange={handleGlobalsChange}
-          addLabel="Add variable"
-          nameLabel={(index) => `Global variable name ${index}`}
-          valueLabel={(index) => `Global variable value ${index}`}
-          enableLabel={(index) => `Enable global variable ${index}`}
+          addLabel={t("vars.add")}
+          nameLabel={(index) => t("vars.globalName", { n: index })}
+          valueLabel={(index) => t("vars.globalValue", { n: index })}
+          enableLabel={(index) => t("vars.globalEnable", { n: index })}
         />
       </section>
 
       <section className="variables-section">
-        <Typography.Title level={5}>
-          Environment: {activeEnvironment?.name ?? "None"}
-        </Typography.Title>
+        <Typography.Title level={5}>{t("vars.environments")}</Typography.Title>
         <Typography.Text type="secondary">
-          Available to scripts as <code>pm.environment.get("name")</code>.
+          {t("vars.environmentsHint")}
         </Typography.Text>
-        {activeEnvironment ? (
-          <VariableTable
-            items={activeEnvironment.variables}
-            onChange={handleEnvironmentVariablesChange}
-            addLabel="Add variable"
-            nameLabel={(index) => `Environment variable name ${index}`}
-            valueLabel={(index) => `Environment variable value ${index}`}
-            enableLabel={(index) => `Enable environment variable ${index}`}
-          />
-        ) : (
+        {environments.length === 0 ? (
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="No environments yet. Add one from the top toolbar."
+            description={t("vars.noEnvironments")}
+          />
+        ) : (
+          <Tabs
+            activeKey={activeTab ?? activeEnvironment?.id}
+            onChange={setActiveTab}
+            items={environments.map((env) => ({
+              key: env.id,
+              label:
+                env.id === activeEnvironment?.id
+                  ? `${env.name} ${t("vars.active")}`
+                  : env.name,
+              children: (
+                <VariableTable
+                  items={env.variables}
+                  onChange={(items) =>
+                    handleEnvironmentVariablesChange(env.id, items)
+                  }
+                  addLabel={t("vars.add")}
+                  nameLabel={(index) => t("vars.envName", { n: index })}
+                  valueLabel={(index) => t("vars.envValue", { n: index })}
+                  enableLabel={(index) => t("vars.envEnable", { n: index })}
+                />
+              ),
+            }))}
           />
         )}
       </section>

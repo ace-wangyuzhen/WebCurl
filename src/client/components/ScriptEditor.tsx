@@ -1,8 +1,10 @@
 import { CodeMirrorEditor } from "./CodeMirrorEditor";
+import { useTranslation } from "../i18n";
 import { useEditorStore } from "../state/editor-store";
 import { useRuntimeStore } from "../state/runtime-store";
 
 export function ScriptEditor() {
+  const { t } = useTranslation();
   const preRequestScript = useEditorStore(
     (state) => state.draft.preRequestScript,
   );
@@ -15,10 +17,10 @@ export function ScriptEditor() {
         value={preRequestScript}
         onChange={(value) => updateDraft({ preRequestScript: value })}
         language="javascript"
-        ariaLabel="Pre-request script"
+        ariaLabel={t("script.label")}
       />
 
-      <div className="script-logs" role="log" aria-label="Script logs">
+      <div className="script-logs" role="log" aria-label={t("script.logs")}>
         {scriptLogs.map((log, index) => (
           <div key={index} className="script-log-line">
             {log}

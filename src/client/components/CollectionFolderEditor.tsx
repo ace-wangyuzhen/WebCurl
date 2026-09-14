@@ -4,9 +4,11 @@ import {
   collectionRepository,
   folderRepository,
 } from "../db/repositories";
+import { useTranslation } from "../i18n";
 import { useEditorStore } from "../state/editor-store";
 
 export function CollectionFolderEditor() {
+  const { t } = useTranslation();
   const selectedCollectionId = useEditorStore(
     (state) => state.selectedCollectionId,
   );
@@ -15,7 +17,10 @@ export function CollectionFolderEditor() {
   const scriptDraft = useEditorStore((state) => state.scriptDraft);
   const updateScriptDraft = useEditorStore((state) => state.updateScriptDraft);
 
-  const kind = selectedFolderId ? "Folder" : "Collection";
+  const isFolder = Boolean(selectedFolderId);
+  const kind = t(isFolder ? "entity.folder" : "entity.collection");
+  const preScript = t("entity.preScript", { kind });
+  const runsHint = t(isFolder ? "entity.runsFolder" : "entity.runsCollection");
 
   const handleChange = (script: string) => {
     updateScriptDraft(script);
@@ -34,19 +39,15 @@ export function CollectionFolderEditor() {
     <div className="entity-editor">
       <div className="entity-editor-header">
         <Typography.Title level={4}>{selectedEntityName}</Typography.Title>
-        <Typography.Text type="secondary">
-          {kind} Pre-request Script
-        </Typography.Text>
+        <Typography.Text type="secondary">{preScript}</Typography.Text>
       </div>
       <CodeMirrorEditor
         value={scriptDraft}
         onChange={handleChange}
         language="javascript"
-        ariaLabel={`${kind} pre-request script`}
+        ariaLabel={preScript}
       />
-      <Typography.Text type="secondary">
-        Runs before every request in this {kind.toLowerCase()}.
-      </Typography.Text>
+      <Typography.Text type="secondary">{runsHint}</Typography.Text>
     </div>
   );
 }

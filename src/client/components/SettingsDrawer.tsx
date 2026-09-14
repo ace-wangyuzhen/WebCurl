@@ -1,4 +1,5 @@
 import { Drawer, Typography } from "antd";
+import { useTranslation } from "../i18n";
 
 interface SettingsDrawerProps {
   open: boolean;
@@ -6,11 +7,16 @@ interface SettingsDrawerProps {
 }
 
 export function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
+  const { t } = useTranslation();
+
   return (
-    <Drawer title="Settings" placement="right" open={open} onClose={onClose}>
-      <Typography.Paragraph>
-        Resource limits and workspace settings will appear here.
-      </Typography.Paragraph>
+    <Drawer
+      title={t("toolbar.settings")}
+      placement="right"
+      open={open}
+      onClose={onClose}
+    >
+      <Typography.Paragraph>{t("settings.placeholder")}</Typography.Paragraph>
     </Drawer>
   );
 }

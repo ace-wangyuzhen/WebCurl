@@ -2,6 +2,7 @@ import { Button, Checkbox, Input, Table } from "antd";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import type { KeyValueItem } from "../../shared/request-types";
 import { createId } from "../db/database";
+import { useTranslation } from "../i18n";
 
 interface KeyValueTableProps {
   items: KeyValueItem[];
@@ -20,6 +21,8 @@ export function KeyValueTable({
   valueLabel,
   enableLabel,
 }: KeyValueTableProps) {
+  const { t } = useTranslation();
+
   const updateItem = (id: string, patch: Partial<KeyValueItem>) => {
     onChange(items.map((item) => (item.id === id ? { ...item, ...patch } : item)));
   };
@@ -51,7 +54,7 @@ export function KeyValueTable({
       ),
     },
     {
-      title: "Name",
+      title: t("table.name"),
       dataIndex: "key",
       render: (_value: unknown, record: KeyValueItem, index: number) => (
         <Input
@@ -62,7 +65,7 @@ export function KeyValueTable({
       ),
     },
     {
-      title: "Value",
+      title: t("table.value"),
       dataIndex: "value",
       render: (_value: unknown, record: KeyValueItem, index: number) => (
         <Input
@@ -81,7 +84,7 @@ export function KeyValueTable({
         <Button
           type="text"
           icon={<DeleteOutlined />}
-          aria-label="Delete row"
+          aria-label={t("table.deleteRow")}
           onClick={() => removeItem(record.id)}
         />
       ),

@@ -6,6 +6,7 @@
   --surface-bg: #ffffff;
   --border-color: #e5e7eb;
   --code-bg: #f6f8fa;
+  --text-secondary: #8c8c8c;
   --method-get: #16a34a;
   --method-post: #2563eb;
   --method-put: #d97706;
@@ -22,6 +23,7 @@
   --surface-bg: #1f1f1f;
   --border-color: #303030;
   --code-bg: #161b22;
+  --text-secondary: #a6a6a6;
   --method-get: #4ade80;
   --method-post: #60a5fa;
   --method-put: #fbbf24;

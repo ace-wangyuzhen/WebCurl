@@ -1,4 +1,7 @@
-import { substituteVariables } from "../../src/client/scripts/variable-substitution";
+import {
+  mergeVariables,
+  substituteVariables,
+} from "../../src/client/scripts/variable-substitution";
 import type { RequestDefinition } from "../../src/shared/request-types";
 
 const baseRequest: RequestDefinition = {
@@ -57,4 +60,17 @@ it("deduplicates unresolved variables and does not mutate the draft", () => {
   expect(result.unresolved).toEqual(["a"]);
   expect(request.url).toBe("https://example.test/{{a}}/{{a}}");
   expect(result.value).not.toBe(request);
+});
+
+it("lets environment variables override globals with the same name", () => {
+  const merged = mergeVariables(
+    { host: "global.example.com", shared: "from-global" },
+    { shared: "from-environment", token: "abc" },
+  );
+
+  expect(merged).toEqual({
+    host: "global.example.com",
+    shared: "from-environment",
+    token: "abc",
+  });
 });

@@ -4,17 +4,18 @@ import {
   Dropdown,
   Input,
   Modal,
-  Select,
   Tooltip,
   Typography,
   message,
 } from "antd";
 import {
+  CheckOutlined,
   DeleteOutlined,
+  DownOutlined,
   DownloadOutlined,
   EditOutlined,
+  EnvironmentOutlined,
   MoonOutlined,
-  MoreOutlined,
   PlusOutlined,
   SettingOutlined,
   SunOutlined,
@@ -23,6 +24,7 @@ import {
 import type { EnvironmentRecord } from "../db/database";
 import { environmentRepository } from "../db/repositories";
 import { exportWorkspace, importWorkspace } from "../db/seed";
+import { useLanguageStore, useTranslation } from "../i18n";
 import { useEditorStore } from "../state/editor-store";
 import type { ThemeMode } from "../theme";
 
@@ -44,8 +46,12 @@ export function TopToolbar({
   onOpenSettings,
 }: TopToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t, language } = useTranslation();
+  const setLanguage = useLanguageStore((state) => state.setLanguage);
 
-  const selectedCollectionId = useEditorStore((state) => state.selectedCollectionId);
+  const selectedCollectionId = useEditorStore(
+    (state) => state.selectedCollectionId,
+  );
   const workspaceVersion = useEditorStore((state) => state.workspaceVersion);
 
   const [environments, setEnvironments] = useState<EnvironmentRecord[]>([]);
@@ -81,7 +87,12 @@ export function TopToolbar({
   };
 
   const confirmEnvModal = async () => {
-    if (!envModal || !selectedCollectionId) {
+    if (!envModal) {
+      return;
+    }
+    if (!selectedCollectionId) {
+      setEnvModal(null);
+      void message.warning(t("env.selectCollection"));
       return;
     }
     const name = envName.trim();
@@ -90,10 +101,11 @@ export function TopToolbar({
       return;
     }
     if (envModal.action === "new") {
-      await environmentRepository.create({
+      const created = await environmentRepository.create({
         collectionId: selectedCollectionId,
         name,
       });
+      await environmentRepository.setActive(selectedCollectionId, created.id);
     } else if (envModal.id) {
       await environmentRepository.update(envModal.id, { name });
     }
@@ -129,17 +141,13 @@ export function TopToolbar({
     try {
       const text = await file.text();
       const data: unknown = JSON.parse(text);
-      if (
-        window.confirm(
-          "Importing will replace the current workspace. Continue?",
-        )
-      ) {
+      if (window.confirm(t("import.confirm"))) {
         await importWorkspace(data);
         useEditorStore.getState().bumpWorkspaceVersion();
-        void message.success("Workspace imported");
+        void message.success(t("import.success"));
       }
     } catch {
-      void message.error("Import failed: invalid workspace file");
+      void message.error(t("import.fail"));
     }
   };
 
@@ -150,36 +158,35 @@ export function TopToolbar({
       </Typography.Title>
 
       <div className="top-toolbar-actions">
-        <Select
-          className="environment-select"
-          placeholder="No environment"
-          value={activeEnvironment?.id ?? null}
-          options={environments.map((env) => ({
-            value: env.id,
-            label: env.name,
-          }))}
-          onChange={(value) => void handleSelectEnvironment(value as string)}
-          aria-label="Active environment"
-        />
         <Dropdown
           menu={{
             items: [
+              ...environments.map((env) => ({
+                key: `env-${env.id}`,
+                label: env.name,
+                icon:
+                  env.id === activeEnvironment?.id ? (
+                    <CheckOutlined />
+                  ) : undefined,
+              })),
+              ...(environments.length > 0
+                ? [{ type: "divider" as const }]
+                : []),
               {
                 key: "new",
-                label: "New Environment",
+                label: t("env.new"),
                 icon: <PlusOutlined />,
               },
               ...(activeEnvironment
                 ? [
-                    { type: "divider" as const },
                     {
                       key: "rename",
-                      label: "Rename Environment",
+                      label: t("env.rename"),
                       icon: <EditOutlined />,
                     },
                     {
                       key: "delete",
-                      label: "Delete Environment",
+                      label: t("env.delete"),
                       icon: <DeleteOutlined />,
                       danger: true,
                     },
@@ -187,7 +194,9 @@ export function TopToolbar({
                 : []),
             ],
             onClick: ({ key }) => {
-              if (key === "new") {
+              if (key.startsWith("env-")) {
+                void handleSelectEnvironment(key.slice("env-".length));
+              } else if (key === "new") {
                 setEnvModal({ action: "new" });
                 setEnvName("");
               } else if (key === "rename" && activeEnvironment) {
@@ -204,40 +213,62 @@ export function TopToolbar({
           }}
           trigger={["click"]}
         >
-          <Button icon={<MoreOutlined />} aria-label="Environment actions" />
+          <button
+            type="button"
+            className="environment-trigger"
+            disabled={!selectedCollectionId}
+            aria-label={t("env.renameTitle")}
+          >
+            <EnvironmentOutlined className="environment-trigger-icon" />
+            <span className="environment-trigger-label">
+              {selectedCollectionId
+                ? activeEnvironment?.name ?? t("env.none")
+                : t("env.selectCollection")}
+            </span>
+            <DownOutlined className="environment-trigger-caret" />
+          </button>
         </Dropdown>
 
-        <Tooltip title="Import workspace">
+        <Tooltip title={t("toolbar.language")}>
+          <Button
+            aria-label={t("toolbar.language")}
+            onClick={() => setLanguage(language === "zh" ? "en" : "zh")}
+          >
+            {language === "zh" ? "EN" : "中"}
+          </Button>
+        </Tooltip>
+
+        <Tooltip title={t("toolbar.import")}>
           <Button
             icon={<UploadOutlined />}
-            aria-label="Import workspace"
+            aria-label={t("toolbar.import")}
             onClick={() => fileInputRef.current?.click()}
           />
         </Tooltip>
-        <Tooltip title="Export workspace">
+        <Tooltip title={t("toolbar.export")}>
           <Button
             icon={<DownloadOutlined />}
-            aria-label="Export workspace"
+            aria-label={t("toolbar.export")}
             onClick={() => void handleExport()}
           />
         </Tooltip>
-        <Tooltip title="Settings">
+        <Tooltip title={t("toolbar.settings")}>
           <Button
             icon={<SettingOutlined />}
-            aria-label="Open settings"
+            aria-label={t("toolbar.settings")}
             onClick={onOpenSettings}
           />
         </Tooltip>
         <Tooltip
           title={
             themeMode === "dark"
-              ? "Switch to light theme"
-              : "Switch to dark theme"
+              ? t("toolbar.theme.toLight")
+              : t("toolbar.theme.toDark")
           }
         >
           <Button
             icon={themeMode === "dark" ? <SunOutlined /> : <MoonOutlined />}
-            aria-label="Toggle theme"
+            aria-label={t("toolbar.theme.toggle")}
             onClick={onToggleTheme}
           />
         </Tooltip>
@@ -248,7 +279,7 @@ export function TopToolbar({
         type="file"
         accept="application/json"
         style={{ display: "none" }}
-        aria-label="Import workspace file"
+        aria-label={t("toolbar.import")}
         onChange={(event) => {
           const file = event.target.files?.[0];
           void handleImport(file);
@@ -257,32 +288,31 @@ export function TopToolbar({
       />
 
       <Modal
-        title={envModal?.action === "new" ? "New Environment" : "Rename Environment"}
+        title={envModal?.action === "new" ? t("env.newTitle") : t("env.renameTitle")}
         open={envModal !== null}
         onOk={() => void confirmEnvModal()}
         onCancel={() => setEnvModal(null)}
-        okText={envModal?.action === "new" ? "Create" : "Rename"}
+        okText={envModal?.action === "new" ? t("env.create") : t("common.rename")}
+        okButtonProps={{ disabled: envName.trim() === "" }}
       >
         <Input
           value={envName}
           onChange={(event) => setEnvName(event.target.value)}
           onPressEnter={() => void confirmEnvModal()}
-          aria-label="Environment name"
+          aria-label={t("env.name")}
           autoFocus
         />
       </Modal>
 
       <Modal
-        title={`Delete Environment ${deleteEnvTarget?.name ?? ""}`}
+        title={t("env.deleteTitle", { name: deleteEnvTarget?.name ?? "" })}
         open={deleteEnvTarget !== null}
         onOk={() => void confirmDeleteEnvironment()}
         onCancel={() => setDeleteEnvTarget(null)}
-        okText="Delete"
+        okText={t("common.delete")}
         okButtonProps={{ danger: true }}
       >
-        <Typography.Paragraph>
-          This will permanently delete this environment and its variables.
-        </Typography.Paragraph>
+        <Typography.Paragraph>{t("env.deleteDesc")}</Typography.Paragraph>
       </Modal>
     </header>
   );

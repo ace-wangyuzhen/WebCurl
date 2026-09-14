@@ -53,6 +53,15 @@ export function CodeMirrorEditor({
           minimalSetup,
           lineNumbers(),
           languageExtension(language),
+          EditorView.theme({
+            "&": { minHeight: `${minHeight}px` },
+            ".cm-scroller": { minHeight: `${minHeight}px`, overflow: "auto" },
+            ".cm-gutters": {
+              backgroundColor: "transparent",
+              borderRight: "1px solid var(--border-color)",
+              color: "var(--text-secondary)",
+            },
+          }),
           ...(readOnly
             ? [EditorState.readOnly.of(true), EditorView.editable.of(false)]
             : []),

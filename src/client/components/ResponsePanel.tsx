@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Alert, Button, Empty, Space, Tag, Typography } from "antd";
 import { CopyOutlined } from "@ant-design/icons";
 import { useRuntimeStore } from "../state/runtime-store";
+import { useTranslation } from "../i18n";
 import { CodeMirrorEditor, type EditorLanguage } from "./CodeMirrorEditor";
 
 function prettyJson(body: string): string | null {
@@ -41,8 +42,10 @@ function languageFromContentType(contentType: string): EditorLanguage {
 }
 
 export function ResponsePanel() {
+  const { t } = useTranslation();
   const activeResponse = useRuntimeStore((state) => state.activeResponse);
   const activeError = useRuntimeStore((state) => state.activeError);
+  const activeCurl = useRuntimeStore((state) => state.activeCurl);
   const [pretty, setPretty] = useState(false);
 
   const copyBody = async () => {
@@ -54,13 +57,24 @@ export function ResponsePanel() {
     }
   };
 
+  const copyCurl = async () => {
+    if (!activeCurl) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(activeCurl);
+    } catch {
+      // Clipboard access is unavailable; the user can still select the text.
+    }
+  };
+
   if (!activeResponse && !activeError) {
     return (
-      <div className="response-panel" role="region" aria-label="Response">
+      <div className="response-panel" role="region" aria-label={t("response.region")}>
         <div className="response-empty">
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="No response yet"
+            description={t("response.empty")}
           />
         </div>
       </div>
@@ -71,7 +85,7 @@ export function ResponsePanel() {
 
   if (error) {
     return (
-      <div className="response-panel" role="region" aria-label="Response">
+      <div className="response-panel" role="region" aria-label={t("response.region")}>
         <div className="response-empty">
           <Alert
             type="error"
@@ -97,7 +111,7 @@ export function ResponsePanel() {
   const shownBody = pretty ? (prettyJson(body) ?? body) : body;
 
   return (
-    <div className="response-panel" role="region" aria-label="Response">
+    <div className="response-panel" role="region" aria-label={t("response.region")}>
       <div className="response-summary">
         <Tag color={statusColor(status)}>
           {status} {statusText}
@@ -117,7 +131,7 @@ export function ResponsePanel() {
         </div>
         {headers.length === 0 ? (
           <Typography.Text type="secondary">
-            No response headers
+            {t("response.noHeaders")}
           </Typography.Text>
         ) : (
           <div className="response-headers">
@@ -141,29 +155,46 @@ export function ResponsePanel() {
             <Button
               size="small"
               icon={<CopyOutlined />}
-              aria-label="Copy response body"
+              aria-label={t("response.copyAria")}
               onClick={() => void copyBody()}
             >
-              Copy
+              {t("common.copy")}
             </Button>
             <Button size="small" onClick={() => setPretty((value) => !value)}>
-              {pretty ? "Raw" : "Pretty"}
+              {pretty ? t("response.raw") : t("response.pretty")}
             </Button>
           </Space>
         </div>
         {body === "" ? (
-          <Typography.Text type="secondary">No response body</Typography.Text>
+          <Typography.Text type="secondary">{t("response.noBody")}</Typography.Text>
         ) : (
           <div className="response-body-viewer">
             <CodeMirrorEditor
               value={shownBody}
               language={language}
-              ariaLabel="Response body"
+              ariaLabel={t("body.content")}
               readOnly
             />
           </div>
         )}
       </section>
+
+      {activeCurl ? (
+        <section className="response-section">
+          <div className="response-section-header">
+            <Typography.Title level={5}>cURL</Typography.Title>
+            <Button
+              size="small"
+              icon={<CopyOutlined />}
+              aria-label={t("curl.copyAria")}
+              onClick={() => void copyCurl()}
+            >
+              {t("common.copy")}
+            </Button>
+          </div>
+          <pre className="response-curl">{activeCurl}</pre>
+        </section>
+      ) : null}
     </div>
   );
 }

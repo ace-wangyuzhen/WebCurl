@@ -7,6 +7,14 @@ export interface SubstitutionResult {
 
 const VARIABLE_PATTERN = /\{\{\s*([^{}]+?)\s*\}\}/g;
 
+export function mergeVariables(
+  globals: Record<string, string>,
+  environment: Record<string, string>,
+): Record<string, string> {
+  // Environment variables take precedence over globals on name collision.
+  return { ...globals, ...environment };
+}
+
 export function substituteVariables(
   request: RequestDefinition,
   environment: Record<string, string>,

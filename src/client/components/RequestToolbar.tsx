@@ -4,6 +4,7 @@ import {
   SendOutlined,
   WarningOutlined,
 } from "@ant-design/icons";
+import { useTranslation } from "../i18n";
 import { useEditorStore } from "../state/editor-store";
 import { useRuntimeStore } from "../state/runtime-store";
 
@@ -17,6 +18,7 @@ interface RequestToolbarProps {
 }
 
 export function RequestToolbar({ onSend, onCancel }: RequestToolbarProps) {
+  const { t } = useTranslation();
   const draft = useEditorStore((state) => state.draft);
   const updateDraft = useEditorStore((state) => state.updateDraft);
   const isSending = useRuntimeStore((state) => state.isSending);
@@ -32,38 +34,38 @@ export function RequestToolbar({ onSend, onCancel }: RequestToolbarProps) {
           value={draft.method}
           options={METHOD_OPTIONS}
           onChange={(method) => updateDraft({ method })}
-          aria-label="HTTP method"
+          aria-label={t("request.method")}
         />
         <Input
           className="url-input"
           value={draft.url}
           onChange={(event) => updateDraft({ url: event.target.value })}
-          placeholder="Enter request URL"
-          aria-label="Request URL"
+          placeholder={t("request.urlPlaceholder")}
+          aria-label={t("request.url")}
         />
         <Button
           type="primary"
           icon={<SendOutlined />}
-          aria-label="Send request"
+          aria-label={t("request.sendAria")}
           aria-busy={isSending}
           onClick={onSend}
         >
-          Send
+          {t("request.send")}
         </Button>
         {isSending ? (
           <Button
             icon={<CloseOutlined />}
-            aria-label="Cancel request"
+            aria-label={t("request.cancelAria")}
             onClick={onCancel}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
         ) : null}
       </div>
 
       {unresolvedVariables.length > 0 ? (
         <div className="unresolved-warning" role="alert">
-          <WarningOutlined /> Unresolved variables:{" "}
+          <WarningOutlined /> {t("request.unresolved")}{" "}
           {unresolvedVariables.join(", ")}
         </div>
       ) : null}

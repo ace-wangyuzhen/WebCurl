@@ -1,11 +1,15 @@
 import { useCallback, useState } from "react";
 import { ConfigProvider, theme as antdTheme } from "antd";
+import enUS from "antd/locale/en_US";
+import zhCN from "antd/locale/zh_CN";
 import { AppShell } from "./components/AppShell";
+import { useLanguageStore } from "./i18n";
 import type { ThemeMode } from "./theme";
 
 export function App() {
   const [themeMode, setThemeMode] = useState<ThemeMode>("light");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const language = useLanguageStore((state) => state.language);
 
   const toggleTheme = useCallback(() => {
     setThemeMode((current) => {
@@ -20,6 +24,7 @@ export function App() {
 
   return (
     <ConfigProvider
+      locale={language === "zh" ? zhCN : enUS}
       theme={{
         algorithm:
           themeMode === "dark"

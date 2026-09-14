@@ -10,6 +10,7 @@ interface RuntimeState {
   isSending: boolean;
   activeResponse: ExecuteResponse | null;
   activeError: RuntimeError | null;
+  activeCurl: string | null;
   scriptLogs: string[];
   unresolvedVariables: string[];
   startSend: () => void;
@@ -18,6 +19,7 @@ interface RuntimeState {
   cancelSend: () => void;
   appendLogs: (logs: string[]) => void;
   setUnresolvedVariables: (variables: string[]) => void;
+  setActiveCurl: (curl: string) => void;
   clearResponse: () => void;
 }
 
@@ -25,6 +27,7 @@ export const useRuntimeStore = create<RuntimeState>((set) => ({
   isSending: false,
   activeResponse: null,
   activeError: null,
+  activeCurl: null,
   scriptLogs: [],
   unresolvedVariables: [],
 
@@ -33,6 +36,7 @@ export const useRuntimeStore = create<RuntimeState>((set) => ({
       isSending: true,
       activeResponse: null,
       activeError: null,
+      activeCurl: null,
       scriptLogs: [],
       unresolvedVariables: [],
     }),
@@ -51,10 +55,13 @@ export const useRuntimeStore = create<RuntimeState>((set) => ({
   setUnresolvedVariables: (variables) =>
     set({ unresolvedVariables: variables }),
 
+  setActiveCurl: (curl) => set({ activeCurl: curl }),
+
   clearResponse: () =>
     set({
       activeResponse: null,
       activeError: null,
+      activeCurl: null,
       scriptLogs: [],
       unresolvedVariables: [],
     }),

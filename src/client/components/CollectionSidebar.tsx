@@ -35,6 +35,7 @@ import {
   folderRepository,
   requestRepository,
 } from "../db/repositories";
+import { useTranslation } from "../i18n";
 import { useEditorStore } from "../state/editor-store";
 
 type TreeNodeKind = "collection" | "folder" | "request";
@@ -141,6 +142,7 @@ interface MoveCopyTarget {
 }
 
 export function CollectionSidebar() {
+  const { t } = useTranslation();
   const [collections, setCollections] = useState<CollectionRecord[]>([]);
   const [folders, setFolders] = useState<FolderRecord[]>([]);
   const [requests, setRequests] = useState<RequestRecord[]>([]);
@@ -185,7 +187,7 @@ export function CollectionSidebar() {
     } catch (cause) {
       if (!cancelledRef.current) {
         setError(
-          cause instanceof Error ? cause.message : "Failed to load workspace",
+          cause instanceof Error ? cause.message : t("tree.loadError"),
         );
       }
     } finally {
@@ -193,7 +195,7 @@ export function CollectionSidebar() {
         setLoading(false);
       }
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     cancelledRef.current = false;
@@ -368,18 +370,18 @@ export function CollectionSidebar() {
       return "";
     }
     if (target.kind === "collection") {
-      return "This will permanently delete the collection and all of its folders and requests.";
+      return t("tree.deleteCollectionDesc");
     }
     if (target.kind === "folder") {
-      return "This will permanently delete the folder and all of its nested folders and requests.";
+      return t("tree.deleteFolderDesc");
     }
-    return "This will permanently delete the request.";
+    return t("tree.deleteRequestDesc");
   };
 
   const createFolderIn = async (collectionId: string) => {
     await folderRepository.create({
       collectionId,
-      name: "New Folder",
+      name: t("tree.newFolderName"),
     });
     await load();
   };
@@ -391,7 +393,7 @@ export function CollectionSidebar() {
     await requestRepository.create({
       collectionId,
       folderId,
-      name: "New Request",
+      name: t("tree.newRequestName"),
       method: "GET",
       url: "",
     });
@@ -461,7 +463,7 @@ export function CollectionSidebar() {
       const newFolder = await folderRepository.create({
         collectionId: targetCollectionId,
         parentId,
-        name: `${sourceFolder.name} (copy)`,
+        name: `${sourceFolder.name}${t("common.copySuffix")}`,
         preRequestScript: sourceFolder.preRequestScript,
         sortOrder: sourceFolder.sortOrder,
       });
@@ -503,7 +505,7 @@ export function CollectionSidebar() {
     await requestRepository.create({
       collectionId: targetCollectionId,
       folderId: targetFolderId,
-      name: `${request.name} (copy)`,
+      name: `${request.name}${t("common.copySuffix")}`,
       method: request.method,
       url: request.url,
       queryParams: request.queryParams,
@@ -550,45 +552,45 @@ export function CollectionSidebar() {
     if (kind === "collection") {
       items.push({
         key: "new-folder",
-        label: "New Folder",
+        label: t("tree.newFolder"),
         icon: <FolderAddOutlined />,
       });
       items.push({
         key: "new-request",
-        label: "New Request",
+        label: t("tree.newRequest"),
         icon: <FileAddOutlined />,
       });
       items.push({ type: "divider" });
-      items.push({ key: "rename", label: "Rename", icon: <EditOutlined /> });
+      items.push({ key: "rename",         label: t("common.rename"), icon: <EditOutlined /> });
     } else if (kind === "folder") {
       items.push({
         key: "new-request",
-        label: "New Request",
+        label: t("tree.newRequest"),
         icon: <FileAddOutlined />,
       });
       items.push({ type: "divider" });
       items.push({
         key: "move",
-        label: "Move to...",
+        label: t("tree.moveTo"),
         icon: <ExportOutlined />,
       });
-      items.push({ key: "copy", label: "Copy to...", icon: <CopyOutlined /> });
+      items.push({ key: "copy",         label: t("tree.copyTo"), icon: <CopyOutlined /> });
       items.push({ type: "divider" });
-      items.push({ key: "rename", label: "Rename", icon: <EditOutlined /> });
+      items.push({ key: "rename",         label: t("common.rename"), icon: <EditOutlined /> });
     } else {
       items.push({
         key: "move",
-        label: "Move to...",
+        label: t("tree.moveTo"),
         icon: <ExportOutlined />,
       });
-      items.push({ key: "copy", label: "Copy to...", icon: <CopyOutlined /> });
+      items.push({ key: "copy",         label: t("tree.copyTo"), icon: <CopyOutlined /> });
       items.push({ type: "divider" });
-      items.push({ key: "rename", label: "Rename", icon: <EditOutlined /> });
+      items.push({ key: "rename",         label: t("common.rename"), icon: <EditOutlined /> });
     }
 
     items.push({
       key: "delete",
-      label: "Delete",
+      label: t("common.delete"),
       icon: <DeleteOutlined />,
       danger: true,
     });
@@ -630,7 +632,7 @@ export function CollectionSidebar() {
             size="small"
             type="text"
             icon={<MoreOutlined />}
-            aria-label={`Actions for ${node.name}`}
+            aria-label={t("tree.actionsFor", { name: node.name })}
             onClick={(event) => event.stopPropagation()}
           />
         </Dropdown>
@@ -639,7 +641,7 @@ export function CollectionSidebar() {
   };
 
   const createCollection = async () => {
-    await collectionRepository.create({ name: "New Collection" });
+    await collectionRepository.create({ name: t("tree.newCollectionName") });
     await load();
   };
 
@@ -664,38 +666,38 @@ export function CollectionSidebar() {
 
   const renameTitle = renameTarget
     ? renameTarget.kind === "collection"
-      ? "Rename Collection"
+      ? t("tree.renameCollection")
       : renameTarget.kind === "folder"
-        ? "Rename Folder"
-        : "Rename Request"
-    : "Rename";
+        ? t("tree.renameFolder")
+        : t("tree.renameRequest")
+    : t("common.rename");
 
   return (
     <aside className="collection-sidebar">
       <div className="collection-sidebar-header">
-        <Typography.Text strong>Collections</Typography.Text>
+        <Typography.Text strong>{t("tree.collections")}</Typography.Text>
         <Space size={4}>
-          <Tooltip title="New collection">
+          <Tooltip title={t("tree.newCollection")}>
             <Button
               size="small"
               icon={<PlusOutlined />}
-              aria-label="New collection"
+              aria-label={t("tree.newCollection")}
               onClick={() => void createCollection()}
             />
           </Tooltip>
-          <Tooltip title="New folder">
+          <Tooltip title={t("tree.newFolder")}>
             <Button
               size="small"
               icon={<FolderAddOutlined />}
-              aria-label="New folder"
+              aria-label={t("tree.newFolder")}
               onClick={() => void createFolder()}
             />
           </Tooltip>
-          <Tooltip title="New request">
+          <Tooltip title={t("tree.newRequest")}>
             <Button
               size="small"
               icon={<FileAddOutlined />}
-              aria-label="New request"
+              aria-label={t("tree.newRequest")}
               onClick={() => void createRequest()}
             />
           </Tooltip>
@@ -710,7 +712,7 @@ export function CollectionSidebar() {
         ) : treeData.length === 0 ? (
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="No collections yet"
+            description={t("tree.noCollections")}
           />
         ) : (
           <Tree
@@ -728,23 +730,23 @@ export function CollectionSidebar() {
         open={renameTarget !== null}
         onOk={() => void confirmRename()}
         onCancel={() => setRenameTarget(null)}
-        okText="Rename"
+        okText={t("common.rename")}
       >
         <Input
           value={renameValue}
           onChange={(event) => setRenameValue(event.target.value)}
           onPressEnter={() => void confirmRename()}
-          aria-label="Rename input"
+          aria-label={t("tree.renameInput")}
           autoFocus
         />
       </Modal>
 
       <Modal
-        title={`Delete ${deleteTarget?.name ?? ""}`}
+        title={t("tree.deleteTitle", { name: deleteTarget?.name ?? "" })}
         open={deleteTarget !== null}
         onOk={() => void confirmDelete()}
         onCancel={() => setDeleteTarget(null)}
-        okText="Delete"
+        okText={t("common.delete")}
         okButtonProps={{ danger: true }}
       >
         <Typography.Paragraph>
@@ -753,16 +755,25 @@ export function CollectionSidebar() {
       </Modal>
 
       <Modal
-        title={`${moveCopyTarget?.action === "move" ? "Move" : "Copy"} ${
-          moveCopyTarget?.name ?? ""
-        }`}
+        title={
+          moveCopyTarget
+            ? t(
+                moveCopyTarget.action === "move"
+                  ? "tree.moveTitle"
+                  : "tree.copyTitle",
+                { name: moveCopyTarget.name },
+              )
+            : ""
+        }
         open={moveCopyTarget !== null}
         onOk={() => void confirmMoveCopy()}
         onCancel={() => {
           setMoveCopyTarget(null);
           setTargetId(null);
         }}
-        okText={moveCopyTarget?.action === "move" ? "Move" : "Copy"}
+        okText={
+          moveCopyTarget?.action === "move" ? t("common.move") : t("common.copy")
+        }
         okButtonProps={{ disabled: targetId === null }}
       >
         <TreeSelect
@@ -770,9 +781,9 @@ export function CollectionSidebar() {
           treeData={buildTargetTree(moveCopyTarget?.kind === "request")}
           value={targetId}
           onChange={(value) => setTargetId(value as string)}
-          placeholder="Select destination"
+          placeholder={t("tree.destination")}
           treeDefaultExpandAll
-          aria-label="Move or copy destination"
+          aria-label={t("tree.destination")}
         />
       </Modal>
     </aside>

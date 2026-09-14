@@ -1,6 +1,13 @@
 import "@testing-library/jest-dom/vitest";
 import "fake-indexeddb/auto";
 
+import { useLanguageStore } from "../src/client/i18n";
+
+// UI tests assert English copy; reset the language before each test.
+beforeEach(() => {
+  useLanguageStore.getState().setLanguage("en");
+});
+
 class ResizeObserverMock {
   observe(): void {}
   unobserve(): void {}

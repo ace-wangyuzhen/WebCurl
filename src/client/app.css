@@ -39,8 +39,53 @@ body {
   gap: 8px;
 }
 
-.environment-select {
-  min-width: 140px;
+.environment-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  width: 200px;
+  padding: 0 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--surface-bg);
+  color: inherit;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.environment-trigger:hover:not(:disabled) {
+  border-color: #1677ff;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.12);
+}
+
+.environment-trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.environment-trigger-icon {
+  display: inline-flex;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.environment-trigger-label {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.environment-trigger-caret {
+  color: var(--text-secondary);
+  font-size: 10px;
 }
 
 .app-body {
@@ -198,11 +243,33 @@ body {
   background: #ffffff;
 }
 
+.body-editor .code-mirror-editor,
+.script-editor .code-mirror-editor,
+.entity-editor .code-mirror-editor {
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
 .response-body-viewer {
   border: 1px solid var(--border-color);
   border-radius: 6px;
   overflow: auto;
   max-height: 480px;
+}
+
+.response-curl {
+  margin: 0;
+  padding: 12px;
+  background: var(--code-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre;
+  word-break: break-all;
 }
 
 .entity-editor {
