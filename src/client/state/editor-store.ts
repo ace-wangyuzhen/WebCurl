@@ -30,14 +30,33 @@ export interface RequestSelection {
   request: RequestDraft;
 }
 
+export interface CollectionSelection {
+  collectionId: string;
+  name: string;
+  preRequestScript: string;
+}
+
+export interface FolderSelection {
+  collectionId: string;
+  folderId: string;
+  name: string;
+  preRequestScript: string;
+}
+
 interface EditorState {
   selectedCollectionId: string | null;
   selectedFolderId: string | null;
   selectedRequestId: string | null;
+  selectedEntityName: string;
   draft: RequestDraft;
+  scriptDraft: string;
   workspaceVersion: number;
   selectRequest: (selection: RequestSelection) => void;
+  selectCollection: (selection: CollectionSelection) => void;
+  selectFolder: (selection: FolderSelection) => void;
   updateDraft: (patch: Partial<RequestDraft>) => void;
+  updateScriptDraft: (script: string) => void;
+  updateSelectedEntityName: (name: string) => void;
   clearSelection: () => void;
   bumpWorkspaceVersion: () => void;
 }
@@ -46,7 +65,9 @@ export const useEditorStore = create<EditorState>((set) => ({
   selectedCollectionId: null,
   selectedFolderId: null,
   selectedRequestId: null,
+  selectedEntityName: "",
   draft: createEmptyDraft(),
+  scriptDraft: "",
   workspaceVersion: 0,
 
   selectRequest: ({ collectionId, folderId, requestId, request }) =>
@@ -54,18 +75,46 @@ export const useEditorStore = create<EditorState>((set) => ({
       selectedCollectionId: collectionId,
       selectedFolderId: folderId,
       selectedRequestId: requestId,
+      selectedEntityName: "",
       draft: { ...request },
+      scriptDraft: "",
+    }),
+
+  selectCollection: ({ collectionId, name, preRequestScript }) =>
+    set({
+      selectedCollectionId: collectionId,
+      selectedFolderId: null,
+      selectedRequestId: null,
+      selectedEntityName: name,
+      draft: createEmptyDraft(),
+      scriptDraft: preRequestScript,
+    }),
+
+  selectFolder: ({ collectionId, folderId, name, preRequestScript }) =>
+    set({
+      selectedCollectionId: collectionId,
+      selectedFolderId: folderId,
+      selectedRequestId: null,
+      selectedEntityName: name,
+      draft: createEmptyDraft(),
+      scriptDraft: preRequestScript,
     }),
 
   updateDraft: (patch) =>
     set((state) => ({ draft: { ...state.draft, ...patch } })),
+
+  updateScriptDraft: (script) => set({ scriptDraft: script }),
+
+  updateSelectedEntityName: (name) => set({ selectedEntityName: name }),
 
   clearSelection: () =>
     set({
       selectedCollectionId: null,
       selectedFolderId: null,
       selectedRequestId: null,
+      selectedEntityName: "",
       draft: createEmptyDraft(),
+      scriptDraft: "",
     }),
 
   bumpWorkspaceVersion: () =>

@@ -7,6 +7,7 @@ export interface CollectionRecord {
   name: string;
   description: string;
   preRequestScript: string;
+  globals: EnvironmentVariable[];
   createdAt: string;
   updatedAt: string;
 }
@@ -46,6 +47,7 @@ export interface EnvironmentVariable {
 
 export interface EnvironmentRecord {
   id: string;
+  collectionId: string;
   name: string;
   variables: EnvironmentVariable[];
   isActive: boolean;
@@ -76,6 +78,9 @@ export class WebCurlDatabase extends Dexie {
       requests: "id, collectionId, folderId",
       environments: "id",
       history: "id, createdAt",
+    });
+    this.version(2).stores({
+      environments: "id, collectionId",
     });
   }
 }

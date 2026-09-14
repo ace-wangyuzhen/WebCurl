@@ -2,6 +2,8 @@ import { useCallback, useRef } from "react";
 import { RequestToolbar } from "./RequestToolbar";
 import { RequestTabs } from "./RequestTabs";
 import { ResponsePanel } from "./ResponsePanel";
+import { CollectionFolderEditor } from "./CollectionFolderEditor";
+import { CollectionVariablesPanel } from "./CollectionVariablesPanel";
 import type { RequestDefinition } from "../../shared/request-types";
 import { executeRequest, ClientRequestError } from "../api/execute-client";
 import {
@@ -35,6 +37,12 @@ function normalizeError(error: unknown): RuntimeError {
 export function RequestWorkspace() {
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  const selectedRequestId = useEditorStore((state) => state.selectedRequestId);
+  const selectedCollectionId = useEditorStore(
+    (state) => state.selectedCollectionId,
+  );
+  const selectedFolderId = useEditorStore((state) => state.selectedFolderId);
+
   const handleSend = useCallback(async () => {
     const runtime = useRuntimeStore.getState();
     if (runtime.isSending) {
@@ -46,13 +54,14 @@ export function RequestWorkspace() {
 
     // Build the ordered script chain: collection → folders (outer → inner) →
     // request.
+    const collection = selectedCollectionId
+      ? await collectionRepository.get(selectedCollectionId)
+      : undefined;
+
     const scriptSources: string[] = [];
 
-    if (selectedCollectionId) {
-      const collection = await collectionRepository.get(selectedCollectionId);
-      if (collection?.preRequestScript) {
-        scriptSources.push(collection.preRequestScript);
-      }
+    if (collection?.preRequestScript) {
+      scriptSources.push(collection.preRequestScript);
     }
 
     if (selectedFolderId) {
@@ -73,9 +82,19 @@ export function RequestWorkspace() {
 
     scriptSources.push(draft.preRequestScript);
 
-    // Build the execution environment from the active environment record.
-    const environments = await environmentRepository.list();
-    const activeEnvironment = environments.find((env) => env.isActive) ?? null;
+    // Build per-collection globals and the active environment's variables.
+    const globals: Record<string, string> = {};
+    for (const variable of collection?.globals ?? []) {
+      if (variable.enabled) {
+        globals[variable.key] = variable.value;
+      }
+    }
+
+    const environments = selectedCollectionId
+      ? await environmentRepository.listByCollection(selectedCollectionId)
+      : [];
+    const activeEnvironment =
+      environments.find((env) => env.isActive) ?? environments[0] ?? null;
     const environment: Record<string, string> = {};
     for (const variable of activeEnvironment?.variables ?? []) {
       if (variable.enabled) {
@@ -100,15 +119,18 @@ export function RequestWorkspace() {
       const scriptResult = await runPreRequestScripts(
         scriptSources,
         request,
+        globals,
         environment,
         { executor: createWorkerScriptExecutor() },
       );
       runtime.appendLogs(scriptResult.logs);
 
-      const substitution = substituteVariables(
-        scriptResult.request,
-        scriptResult.environment,
-      );
+      // Environment variables take precedence over globals for {{...}}.
+      const variables = {
+        ...scriptResult.globals,
+        ...scriptResult.environment,
+      };
+      const substitution = substituteVariables(scriptResult.request, variables);
       runtime.setUnresolvedVariables(substitution.unresolved);
 
       const response = await executeRequest(
@@ -138,6 +160,17 @@ export function RequestWorkspace() {
   const handleCancel = useCallback(() => {
     abortControllerRef.current?.abort();
   }, []);
+
+  if (!selectedRequestId && (selectedCollectionId || selectedFolderId)) {
+    return (
+      <div className="request-workspace-inner">
+        <CollectionFolderEditor />
+        {!selectedFolderId && selectedCollectionId ? (
+          <CollectionVariablesPanel collectionId={selectedCollectionId} />
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div className="request-workspace-inner">

@@ -9,10 +9,11 @@ export type EditorLanguage = "json" | "javascript" | "text";
 
 interface CodeMirrorEditorProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange?: (value: string) => void;
   language: EditorLanguage;
   ariaLabel: string;
   minHeight?: number;
+  readOnly?: boolean;
 }
 
 function languageExtension(language: EditorLanguage): Extension {
@@ -31,6 +32,7 @@ export function CodeMirrorEditor({
   language,
   ariaLabel,
   minHeight = 120,
+  readOnly = false,
 }: CodeMirrorEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -51,9 +53,12 @@ export function CodeMirrorEditor({
           minimalSetup,
           lineNumbers(),
           languageExtension(language),
+          ...(readOnly
+            ? [EditorState.readOnly.of(true), EditorView.editable.of(false)]
+            : []),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
-              onChangeRef.current(update.state.doc.toString());
+              onChangeRef.current?.(update.state.doc.toString());
             }
           }),
         ],
@@ -71,7 +76,7 @@ export function CodeMirrorEditor({
       view.destroy();
       viewRef.current = null;
     };
-  }, [language, failed]);
+  }, [language, failed, readOnly]);
 
   useEffect(() => {
     const view = viewRef.current;
@@ -89,7 +94,8 @@ export function CodeMirrorEditor({
       <textarea
         className="code-mirror-editor-fallback"
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        readOnly={readOnly}
+        onChange={(event) => onChange?.(event.target.value)}
         aria-label={ariaLabel}
         style={{ minHeight, width: "100%" }}
       />

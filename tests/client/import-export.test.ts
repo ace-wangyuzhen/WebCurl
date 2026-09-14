@@ -25,7 +25,11 @@ it("round-trips workspace data through export and import", async () => {
   await requestRepository.create(
     createRequestInput(collection.id, { name: "Ping" }),
   );
-  await environmentRepository.create({ name: "Staging", isActive: true });
+  await environmentRepository.create({
+    collectionId: collection.id,
+    name: "Staging",
+    isActive: true,
+  });
 
   const exported = await exportWorkspace();
   expect(exported.version).toBe(1);
@@ -38,7 +42,9 @@ it("round-trips workspace data through export and import", async () => {
   expect(collections).toHaveLength(1);
   expect(collections[0].name).toBe("Export Me");
   expect(await requestRepository.listByCollection(collection.id)).toHaveLength(1);
-  expect(await environmentRepository.list()).toHaveLength(1);
+  expect(
+    await environmentRepository.listByCollection(collection.id),
+  ).toHaveLength(1);
 });
 
 it("rejects an unknown workspace version", async () => {

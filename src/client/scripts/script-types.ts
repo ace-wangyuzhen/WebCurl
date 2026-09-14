@@ -9,12 +9,14 @@ export interface ScriptLimits {
 export interface ScriptExecutionInput {
   source: string;
   request: RequestDefinition;
+  globals: Record<string, string>;
   environment: Record<string, string>;
   limits: ScriptLimits;
 }
 
 export interface ScriptExecutionOutput {
   request: RequestDefinition;
+  globals: Record<string, string>;
   environment: Record<string, string>;
   logs: string[];
   durationMs: number;

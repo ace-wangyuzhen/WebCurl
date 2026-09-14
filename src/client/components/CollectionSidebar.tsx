@@ -1,9 +1,28 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Key } from "react";
-import { Alert, Button, Empty, Space, Spin, Tooltip, Tree, Typography } from "antd";
 import {
+  Alert,
+  Button,
+  Dropdown,
+  Empty,
+  Input,
+  Modal,
+  Space,
+  Spin,
+  Tooltip,
+  Tree,
+  TreeSelect,
+  Typography,
+} from "antd";
+import type { MenuProps } from "antd";
+import {
+  CopyOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  ExportOutlined,
   FileAddOutlined,
   FolderAddOutlined,
+  MoreOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
 import type {
@@ -18,11 +37,22 @@ import {
 } from "../db/repositories";
 import { useEditorStore } from "../state/editor-store";
 
+type TreeNodeKind = "collection" | "folder" | "request";
+
 interface TreeDataNode {
   key: string;
   title: string;
+  name: string;
+  kind: TreeNodeKind;
+  collectionId: string;
   children?: TreeDataNode[];
   isLeaf?: boolean;
+}
+
+interface TargetTreeNode {
+  value: string;
+  title: string;
+  children?: TargetTreeNode[];
 }
 
 function buildCollectionTree(
@@ -42,6 +72,9 @@ function buildCollectionTree(
       .map((folder) => ({
         key: folder.id,
         title: folder.name,
+        name: folder.name,
+        kind: "folder" as const,
+        collectionId: folder.collectionId,
         children: [
           ...folderNodes(collectionId, folder.id),
           ...requests
@@ -49,6 +82,9 @@ function buildCollectionTree(
             .map((request) => ({
               key: request.id,
               title: request.name,
+              name: request.name,
+              kind: "request" as const,
+              collectionId: request.collectionId,
               isLeaf: true,
             })),
         ],
@@ -57,6 +93,9 @@ function buildCollectionTree(
   return collections.map((collection) => ({
     key: collection.id,
     title: collection.name,
+    name: collection.name,
+    kind: "collection" as const,
+    collectionId: collection.id,
     children: [
       ...folderNodes(collection.id, null),
       ...requests
@@ -67,10 +106,38 @@ function buildCollectionTree(
         .map((request) => ({
           key: request.id,
           title: request.name,
+          name: request.name,
+          kind: "request" as const,
+          collectionId: request.collectionId,
           isLeaf: true,
         })),
     ],
   }));
+}
+
+interface RenameTarget {
+  kind: TreeNodeKind;
+  id: string;
+  name: string;
+}
+
+interface DeleteTarget {
+  kind: TreeNodeKind;
+  id: string;
+  name: string;
+}
+
+interface DeletePlan {
+  collectionIds: string[];
+  folderIds: string[];
+  requestIds: string[];
+}
+
+interface MoveCopyTarget {
+  kind: "folder" | "request";
+  action: "move" | "copy";
+  id: string;
+  name: string;
 }
 
 export function CollectionSidebar() {
@@ -79,8 +146,19 @@ export function CollectionSidebar() {
   const [requests, setRequests] = useState<RequestRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [renameTarget, setRenameTarget] = useState<RenameTarget | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+  const [moveCopyTarget, setMoveCopyTarget] = useState<MoveCopyTarget | null>(
+    null,
+  );
+  const [targetId, setTargetId] = useState<string | null>(null);
 
   const selectedRequestId = useEditorStore((state) => state.selectedRequestId);
+  const selectedFolderId = useEditorStore((state) => state.selectedFolderId);
+  const selectedCollectionId = useEditorStore(
+    (state) => state.selectedCollectionId,
+  );
   const workspaceVersion = useEditorStore((state) => state.workspaceVersion);
   const cancelledRef = useRef(false);
 
@@ -134,24 +212,430 @@ export function CollectionSidebar() {
     if (keys.length === 0) {
       return;
     }
-    const request = requests.find((candidate) => candidate.id === keys[0]);
+    const key = keys[0] as string;
+
+    const request = requests.find((candidate) => candidate.id === key);
+    if (request) {
+      useEditorStore.getState().selectRequest({
+        collectionId: request.collectionId,
+        folderId: request.folderId,
+        requestId: request.id,
+        request: {
+          name: request.name,
+          method: request.method,
+          url: request.url,
+          queryParams: request.queryParams,
+          headers: request.headers,
+          body: request.body,
+          preRequestScript: request.preRequestScript,
+        },
+      });
+      return;
+    }
+
+    const folder = folders.find((candidate) => candidate.id === key);
+    if (folder) {
+      useEditorStore.getState().selectFolder({
+        collectionId: folder.collectionId,
+        folderId: folder.id,
+        name: folder.name,
+        preRequestScript: folder.preRequestScript,
+      });
+      return;
+    }
+
+    const collection = collections.find((candidate) => candidate.id === key);
+    if (collection) {
+      useEditorStore.getState().selectCollection({
+        collectionId: collection.id,
+        name: collection.name,
+        preRequestScript: collection.preRequestScript,
+      });
+    }
+  };
+
+  const openRename = (kind: TreeNodeKind, id: string, name: string) => {
+    setRenameTarget({ kind, id, name });
+    setRenameValue(name);
+  };
+
+  const confirmRename = async () => {
+    if (!renameTarget) {
+      return;
+    }
+    const { kind, id } = renameTarget;
+    const name = renameValue.trim();
+    setRenameTarget(null);
+    if (name === "") {
+      return;
+    }
+    if (kind === "collection") {
+      await collectionRepository.update(id, { name });
+    } else if (kind === "folder") {
+      await folderRepository.update(id, { name });
+    } else {
+      await requestRepository.update(id, { name });
+    }
+
+    const state = useEditorStore.getState();
+    if (kind === "collection" && state.selectedCollectionId === id) {
+      useEditorStore.getState().updateSelectedEntityName(name);
+    } else if (kind === "folder" && state.selectedFolderId === id) {
+      useEditorStore.getState().updateSelectedEntityName(name);
+    } else if (kind === "request" && state.selectedRequestId === id) {
+      useEditorStore.getState().updateDraft({ name });
+    }
+
+    await load();
+  };
+
+  const collectFolderSubtree = (rootId: string): string[] => {
+    const result: string[] = [];
+    const queue = [rootId];
+    while (queue.length > 0) {
+      const current = queue.shift();
+      if (current === undefined) {
+        break;
+      }
+      result.push(current);
+      for (const folder of folders) {
+        if (folder.parentId === current) {
+          queue.push(folder.id);
+        }
+      }
+    }
+    return result;
+  };
+
+  const buildDeletePlan = (kind: TreeNodeKind, id: string): DeletePlan => {
+    if (kind === "request") {
+      return { collectionIds: [], folderIds: [], requestIds: [id] };
+    }
+    if (kind === "folder") {
+      const folderIds = collectFolderSubtree(id);
+      const requestIds = requests
+        .filter(
+          (request) =>
+            request.folderId !== null && folderIds.includes(request.folderId),
+        )
+        .map((request) => request.id);
+      return { collectionIds: [], folderIds, requestIds };
+    }
+    const folderIds = folders
+      .filter((folder) => folder.collectionId === id)
+      .map((folder) => folder.id);
+    const requestIds = requests
+      .filter((request) => request.collectionId === id)
+      .map((request) => request.id);
+    return { collectionIds: [id], folderIds, requestIds };
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) {
+      return;
+    }
+    const { kind, id } = deleteTarget;
+    setDeleteTarget(null);
+
+    const plan = buildDeletePlan(kind, id);
+    for (const folderId of plan.folderIds) {
+      await folderRepository.remove(folderId);
+    }
+    for (const requestId of plan.requestIds) {
+      await requestRepository.remove(requestId);
+    }
+    for (const collectionId of plan.collectionIds) {
+      await collectionRepository.remove(collectionId);
+    }
+
+    const state = useEditorStore.getState();
+    const selectionWasDeleted =
+      (state.selectedRequestId !== null &&
+        plan.requestIds.includes(state.selectedRequestId)) ||
+      (state.selectedFolderId !== null &&
+        plan.folderIds.includes(state.selectedFolderId)) ||
+      (state.selectedCollectionId !== null &&
+        plan.collectionIds.includes(state.selectedCollectionId));
+    if (selectionWasDeleted) {
+      useEditorStore.getState().clearSelection();
+    }
+
+    await load();
+  };
+
+  const deleteDescription = (target: DeleteTarget | null): string => {
+    if (!target) {
+      return "";
+    }
+    if (target.kind === "collection") {
+      return "This will permanently delete the collection and all of its folders and requests.";
+    }
+    if (target.kind === "folder") {
+      return "This will permanently delete the folder and all of its nested folders and requests.";
+    }
+    return "This will permanently delete the request.";
+  };
+
+  const createFolderIn = async (collectionId: string) => {
+    await folderRepository.create({
+      collectionId,
+      name: "New Folder",
+    });
+    await load();
+  };
+
+  const createRequestIn = async (
+    collectionId: string,
+    folderId: string | null,
+  ) => {
+    await requestRepository.create({
+      collectionId,
+      folderId,
+      name: "New Request",
+      method: "GET",
+      url: "",
+    });
+    await load();
+  };
+
+  const buildTargetTree = (includeFolders: boolean): TargetTreeNode[] => {
+    const folderNodes = (
+      collectionId: string,
+      parentId: string | null,
+    ): TargetTreeNode[] =>
+      folders
+        .filter(
+          (folder) =>
+            folder.collectionId === collectionId && folder.parentId === parentId,
+        )
+        .map((folder) => ({
+          value: folder.id,
+          title: folder.name,
+          children: folderNodes(collectionId, folder.id),
+        }));
+
+    return collections.map((collection) => ({
+      value: collection.id,
+      title: collection.name,
+      children: includeFolders ? folderNodes(collection.id, null) : undefined,
+    }));
+  };
+
+  const resolveTarget = (
+    targetId: string,
+  ): { collectionId: string; folderId: string | null } => {
+    const folder = folders.find((candidate) => candidate.id === targetId);
+    if (folder) {
+      return { collectionId: folder.collectionId, folderId: folder.id };
+    }
+    return { collectionId: targetId, folderId: null };
+  };
+
+  const moveFolderTo = async (folderId: string, targetCollectionId: string) => {
+    const subtreeIds = collectFolderSubtree(folderId);
+    for (const id of subtreeIds) {
+      await folderRepository.update(id, { collectionId: targetCollectionId });
+    }
+    const requestIds = requests
+      .filter(
+        (request) =>
+          request.folderId !== null && subtreeIds.includes(request.folderId),
+      )
+      .map((request) => request.id);
+    for (const requestId of requestIds) {
+      await requestRepository.update(requestId, {
+        collectionId: targetCollectionId,
+      });
+    }
+  };
+
+  const copyFolderTo = async (folderId: string, targetCollectionId: string) => {
+    const copyRecursive = async (
+      sourceFolderId: string,
+      parentId: string | null,
+    ): Promise<string> => {
+      const sourceFolder = folders.find((folder) => folder.id === sourceFolderId);
+      if (!sourceFolder) {
+        return "";
+      }
+      const newFolder = await folderRepository.create({
+        collectionId: targetCollectionId,
+        parentId,
+        name: `${sourceFolder.name} (copy)`,
+        preRequestScript: sourceFolder.preRequestScript,
+        sortOrder: sourceFolder.sortOrder,
+      });
+      for (const child of folders.filter(
+        (folder) => folder.parentId === sourceFolderId,
+      )) {
+        await copyRecursive(child.id, newFolder.id);
+      }
+      for (const request of requests.filter(
+        (candidate) => candidate.folderId === sourceFolderId,
+      )) {
+        await requestRepository.create({
+          collectionId: targetCollectionId,
+          folderId: newFolder.id,
+          name: request.name,
+          method: request.method,
+          url: request.url,
+          queryParams: request.queryParams,
+          headers: request.headers,
+          body: request.body,
+          preRequestScript: request.preRequestScript,
+          sortOrder: request.sortOrder,
+        });
+      }
+      return newFolder.id;
+    };
+    await copyRecursive(folderId, null);
+  };
+
+  const copyRequestTo = async (
+    requestId: string,
+    targetCollectionId: string,
+    targetFolderId: string | null,
+  ) => {
+    const request = requests.find((candidate) => candidate.id === requestId);
     if (!request) {
       return;
     }
-    useEditorStore.getState().selectRequest({
-      collectionId: request.collectionId,
-      folderId: request.folderId,
-      requestId: request.id,
-      request: {
-        name: request.name,
-        method: request.method,
-        url: request.url,
-        queryParams: request.queryParams,
-        headers: request.headers,
-        body: request.body,
-        preRequestScript: request.preRequestScript,
-      },
+    await requestRepository.create({
+      collectionId: targetCollectionId,
+      folderId: targetFolderId,
+      name: `${request.name} (copy)`,
+      method: request.method,
+      url: request.url,
+      queryParams: request.queryParams,
+      headers: request.headers,
+      body: request.body,
+      preRequestScript: request.preRequestScript,
+      sortOrder: request.sortOrder,
     });
+  };
+
+  const confirmMoveCopy = async () => {
+    if (!moveCopyTarget || targetId === null) {
+      return;
+    }
+    const { kind, action, id } = moveCopyTarget;
+    setMoveCopyTarget(null);
+    setTargetId(null);
+
+    if (kind === "request") {
+      const target = resolveTarget(targetId);
+      if (action === "move") {
+        await requestRepository.update(id, {
+          collectionId: target.collectionId,
+          folderId: target.folderId,
+        });
+      } else {
+        await copyRequestTo(id, target.collectionId, target.folderId);
+      }
+    } else {
+      if (action === "move") {
+        await moveFolderTo(id, targetId);
+      } else {
+        await copyFolderTo(id, targetId);
+      }
+    }
+
+    await load();
+  };
+
+  const buildMenu = (node: TreeDataNode): MenuProps => {
+    const { key, name, kind, collectionId } = node;
+    const items: MenuProps["items"] = [];
+
+    if (kind === "collection") {
+      items.push({
+        key: "new-folder",
+        label: "New Folder",
+        icon: <FolderAddOutlined />,
+      });
+      items.push({
+        key: "new-request",
+        label: "New Request",
+        icon: <FileAddOutlined />,
+      });
+      items.push({ type: "divider" });
+      items.push({ key: "rename", label: "Rename", icon: <EditOutlined /> });
+    } else if (kind === "folder") {
+      items.push({
+        key: "new-request",
+        label: "New Request",
+        icon: <FileAddOutlined />,
+      });
+      items.push({ type: "divider" });
+      items.push({
+        key: "move",
+        label: "Move to...",
+        icon: <ExportOutlined />,
+      });
+      items.push({ key: "copy", label: "Copy to...", icon: <CopyOutlined /> });
+      items.push({ type: "divider" });
+      items.push({ key: "rename", label: "Rename", icon: <EditOutlined /> });
+    } else {
+      items.push({
+        key: "move",
+        label: "Move to...",
+        icon: <ExportOutlined />,
+      });
+      items.push({ key: "copy", label: "Copy to...", icon: <CopyOutlined /> });
+      items.push({ type: "divider" });
+      items.push({ key: "rename", label: "Rename", icon: <EditOutlined /> });
+    }
+
+    items.push({
+      key: "delete",
+      label: "Delete",
+      icon: <DeleteOutlined />,
+      danger: true,
+    });
+
+    return {
+      items,
+      onClick: ({ key: actionKey }) => {
+        if (actionKey === "new-folder") {
+          void createFolderIn(key);
+        } else if (actionKey === "new-request") {
+          void createRequestIn(
+            kind === "collection" ? key : collectionId,
+            kind === "folder" ? key : null,
+          );
+        } else if (actionKey === "move" || actionKey === "copy") {
+          setMoveCopyTarget({
+            kind: kind === "request" ? "request" : "folder",
+            action: actionKey,
+            id: key,
+            name,
+          });
+          setTargetId(null);
+        } else if (actionKey === "rename") {
+          openRename(kind, key, name);
+        } else if (actionKey === "delete") {
+          setDeleteTarget({ kind, id: key, name });
+        }
+      },
+    };
+  };
+
+  const renderTitle = (node: TreeDataNode) => {
+    return (
+      <span className="tree-node-title">
+        <span className="tree-node-label">{node.name}</span>
+        <Dropdown menu={buildMenu(node)} trigger={["click"]}>
+          <Button
+            className="tree-node-actions"
+            size="small"
+            type="text"
+            icon={<MoreOutlined />}
+            aria-label={`Actions for ${node.name}`}
+            onClick={(event) => event.stopPropagation()}
+          />
+        </Dropdown>
+      </span>
+    );
   };
 
   const createCollection = async () => {
@@ -160,30 +644,31 @@ export function CollectionSidebar() {
   };
 
   const createFolder = async () => {
-    const collection = collections[0];
-    if (!collection) {
+    const collectionId = selectedCollectionId ?? collections[0]?.id;
+    if (!collectionId) {
       return;
     }
-    await folderRepository.create({
-      collectionId: collection.id,
-      name: "New Folder",
-    });
-    await load();
+    await createFolderIn(collectionId);
   };
 
   const createRequest = async () => {
-    const collection = collections[0];
-    if (!collection) {
+    const collectionId = selectedCollectionId ?? collections[0]?.id;
+    if (!collectionId) {
       return;
     }
-    await requestRepository.create({
-      collectionId: collection.id,
-      name: "New Request",
-      method: "GET",
-      url: "",
-    });
-    await load();
+    await createRequestIn(collectionId, null);
   };
+
+  const selectedKey =
+    selectedRequestId ?? selectedFolderId ?? selectedCollectionId;
+
+  const renameTitle = renameTarget
+    ? renameTarget.kind === "collection"
+      ? "Rename Collection"
+      : renameTarget.kind === "folder"
+        ? "Rename Folder"
+        : "Rename Request"
+    : "Rename";
 
   return (
     <aside className="collection-sidebar">
@@ -230,12 +715,66 @@ export function CollectionSidebar() {
         ) : (
           <Tree
             treeData={treeData}
-            selectedKeys={selectedRequestId ? [selectedRequestId] : []}
+            selectedKeys={selectedKey ? [selectedKey] : []}
             defaultExpandAll
             onSelect={handleSelect}
+            titleRender={(node) => renderTitle(node as unknown as TreeDataNode)}
           />
         )}
       </div>
+
+      <Modal
+        title={renameTitle}
+        open={renameTarget !== null}
+        onOk={() => void confirmRename()}
+        onCancel={() => setRenameTarget(null)}
+        okText="Rename"
+      >
+        <Input
+          value={renameValue}
+          onChange={(event) => setRenameValue(event.target.value)}
+          onPressEnter={() => void confirmRename()}
+          aria-label="Rename input"
+          autoFocus
+        />
+      </Modal>
+
+      <Modal
+        title={`Delete ${deleteTarget?.name ?? ""}`}
+        open={deleteTarget !== null}
+        onOk={() => void confirmDelete()}
+        onCancel={() => setDeleteTarget(null)}
+        okText="Delete"
+        okButtonProps={{ danger: true }}
+      >
+        <Typography.Paragraph>
+          {deleteDescription(deleteTarget)}
+        </Typography.Paragraph>
+      </Modal>
+
+      <Modal
+        title={`${moveCopyTarget?.action === "move" ? "Move" : "Copy"} ${
+          moveCopyTarget?.name ?? ""
+        }`}
+        open={moveCopyTarget !== null}
+        onOk={() => void confirmMoveCopy()}
+        onCancel={() => {
+          setMoveCopyTarget(null);
+          setTargetId(null);
+        }}
+        okText={moveCopyTarget?.action === "move" ? "Move" : "Copy"}
+        okButtonProps={{ disabled: targetId === null }}
+      >
+        <TreeSelect
+          style={{ width: "100%" }}
+          treeData={buildTargetTree(moveCopyTarget?.kind === "request")}
+          value={targetId}
+          onChange={(value) => setTargetId(value as string)}
+          placeholder="Select destination"
+          treeDefaultExpandAll
+          aria-label="Move or copy destination"
+        />
+      </Modal>
     </aside>
   );
 }

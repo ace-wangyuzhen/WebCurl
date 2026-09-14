@@ -30,11 +30,13 @@ export class ScriptExecutionError extends Error {
 export async function runPreRequestScripts(
   scripts: string[],
   request: RequestDefinition,
+  globals: Record<string, string>,
   environment: Record<string, string>,
   options: { executor: ScriptExecutor; limits?: ScriptLimits },
 ): Promise<ScriptExecutionOutput> {
   const limits = options.limits ?? DEFAULT_SCRIPT_LIMITS;
   let currentRequest = request;
+  let currentGlobals = { ...globals };
   let currentEnvironment = { ...environment };
   const logs: string[] = [];
 
@@ -46,17 +48,20 @@ export async function runPreRequestScripts(
     const output = await options.executor.run({
       source,
       request: currentRequest,
+      globals: currentGlobals,
       environment: currentEnvironment,
       limits,
     });
 
     currentRequest = output.request;
+    currentGlobals = output.globals;
     currentEnvironment = output.environment;
     logs.push(...output.logs);
   }
 
   return {
     request: currentRequest,
+    globals: currentGlobals,
     environment: currentEnvironment,
     logs,
     durationMs: 0,

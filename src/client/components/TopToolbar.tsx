@@ -1,20 +1,41 @@
-import { useRef } from "react";
-import { Button, Select, Tooltip, Typography, message } from "antd";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Button,
+  Dropdown,
+  Input,
+  Modal,
+  Select,
+  Tooltip,
+  Typography,
+  message,
+} from "antd";
+import {
+  DeleteOutlined,
   DownloadOutlined,
+  EditOutlined,
   MoonOutlined,
+  MoreOutlined,
+  PlusOutlined,
   SettingOutlined,
   SunOutlined,
   UploadOutlined,
 } from "@ant-design/icons";
+import type { EnvironmentRecord } from "../db/database";
+import { environmentRepository } from "../db/repositories";
 import { exportWorkspace, importWorkspace } from "../db/seed";
 import { useEditorStore } from "../state/editor-store";
-import type { ThemeMode } from "../App";
+import type { ThemeMode } from "../theme";
 
 interface TopToolbarProps {
   themeMode: ThemeMode;
   onToggleTheme: () => void;
   onOpenSettings: () => void;
+}
+
+interface EnvModalState {
+  action: "new" | "rename";
+  id?: string;
+  name?: string;
 }
 
 export function TopToolbar({
@@ -23,6 +44,70 @@ export function TopToolbar({
   onOpenSettings,
 }: TopToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const selectedCollectionId = useEditorStore((state) => state.selectedCollectionId);
+  const workspaceVersion = useEditorStore((state) => state.workspaceVersion);
+
+  const [environments, setEnvironments] = useState<EnvironmentRecord[]>([]);
+  const [envModal, setEnvModal] = useState<EnvModalState | null>(null);
+  const [envName, setEnvName] = useState("");
+  const [deleteEnvTarget, setDeleteEnvTarget] = useState<EnvironmentRecord | null>(
+    null,
+  );
+
+  const loadEnvironments = useCallback(async () => {
+    if (!selectedCollectionId) {
+      setEnvironments([]);
+      return;
+    }
+    setEnvironments(
+      await environmentRepository.listByCollection(selectedCollectionId),
+    );
+  }, [selectedCollectionId]);
+
+  useEffect(() => {
+    void loadEnvironments();
+  }, [loadEnvironments, workspaceVersion]);
+
+  const activeEnvironment =
+    environments.find((env) => env.isActive) ?? environments[0] ?? null;
+
+  const handleSelectEnvironment = async (envId: string) => {
+    if (!selectedCollectionId) {
+      return;
+    }
+    await environmentRepository.setActive(selectedCollectionId, envId);
+    useEditorStore.getState().bumpWorkspaceVersion();
+  };
+
+  const confirmEnvModal = async () => {
+    if (!envModal || !selectedCollectionId) {
+      return;
+    }
+    const name = envName.trim();
+    setEnvModal(null);
+    if (name === "") {
+      return;
+    }
+    if (envModal.action === "new") {
+      await environmentRepository.create({
+        collectionId: selectedCollectionId,
+        name,
+      });
+    } else if (envModal.id) {
+      await environmentRepository.update(envModal.id, { name });
+    }
+    useEditorStore.getState().bumpWorkspaceVersion();
+  };
+
+  const confirmDeleteEnvironment = async () => {
+    if (!deleteEnvTarget) {
+      return;
+    }
+    setDeleteEnvTarget(null);
+    await environmentRepository.remove(deleteEnvTarget.id);
+    useEditorStore.getState().bumpWorkspaceVersion();
+  };
 
   const handleExport = async () => {
     const data = await exportWorkspace();
@@ -68,10 +153,60 @@ export function TopToolbar({
         <Select
           className="environment-select"
           placeholder="No environment"
-          options={[]}
-          value={null}
+          value={activeEnvironment?.id ?? null}
+          options={environments.map((env) => ({
+            value: env.id,
+            label: env.name,
+          }))}
+          onChange={(value) => void handleSelectEnvironment(value as string)}
           aria-label="Active environment"
         />
+        <Dropdown
+          menu={{
+            items: [
+              {
+                key: "new",
+                label: "New Environment",
+                icon: <PlusOutlined />,
+              },
+              ...(activeEnvironment
+                ? [
+                    { type: "divider" as const },
+                    {
+                      key: "rename",
+                      label: "Rename Environment",
+                      icon: <EditOutlined />,
+                    },
+                    {
+                      key: "delete",
+                      label: "Delete Environment",
+                      icon: <DeleteOutlined />,
+                      danger: true,
+                    },
+                  ]
+                : []),
+            ],
+            onClick: ({ key }) => {
+              if (key === "new") {
+                setEnvModal({ action: "new" });
+                setEnvName("");
+              } else if (key === "rename" && activeEnvironment) {
+                setEnvModal({
+                  action: "rename",
+                  id: activeEnvironment.id,
+                  name: activeEnvironment.name,
+                });
+                setEnvName(activeEnvironment.name);
+              } else if (key === "delete" && activeEnvironment) {
+                setDeleteEnvTarget(activeEnvironment);
+              }
+            },
+          }}
+          trigger={["click"]}
+        >
+          <Button icon={<MoreOutlined />} aria-label="Environment actions" />
+        </Dropdown>
+
         <Tooltip title="Import workspace">
           <Button
             icon={<UploadOutlined />}
@@ -120,6 +255,35 @@ export function TopToolbar({
           event.target.value = "";
         }}
       />
+
+      <Modal
+        title={envModal?.action === "new" ? "New Environment" : "Rename Environment"}
+        open={envModal !== null}
+        onOk={() => void confirmEnvModal()}
+        onCancel={() => setEnvModal(null)}
+        okText={envModal?.action === "new" ? "Create" : "Rename"}
+      >
+        <Input
+          value={envName}
+          onChange={(event) => setEnvName(event.target.value)}
+          onPressEnter={() => void confirmEnvModal()}
+          aria-label="Environment name"
+          autoFocus
+        />
+      </Modal>
+
+      <Modal
+        title={`Delete Environment ${deleteEnvTarget?.name ?? ""}`}
+        open={deleteEnvTarget !== null}
+        onOk={() => void confirmDeleteEnvironment()}
+        onCancel={() => setDeleteEnvTarget(null)}
+        okText="Delete"
+        okButtonProps={{ danger: true }}
+      >
+        <Typography.Paragraph>
+          This will permanently delete this environment and its variables.
+        </Typography.Paragraph>
+      </Modal>
     </header>
   );
 }

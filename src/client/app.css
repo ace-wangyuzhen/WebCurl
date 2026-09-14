@@ -68,6 +68,31 @@ body {
   padding: 0 8px 12px;
 }
 
+.tree-node-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+}
+
+.tree-node-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-node-actions {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.tree-node-title:hover .tree-node-actions,
+.tree-node-title:focus-within .tree-node-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .request-workspace {
   flex: 1;
   min-width: 0;
@@ -103,11 +128,116 @@ body {
 
 .response-panel {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
   min-height: 160px;
   padding: 16px;
   border-top: 1px solid var(--border-color);
+}
+
+.response-empty {
+  margin: auto;
+}
+
+.response-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.response-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.response-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.response-section-header .ant-typography {
+  margin: 0;
+}
+
+.response-headers {
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.response-header-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) 2fr;
+  gap: 12px;
+  padding: 6px 12px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.response-header-row:last-child {
+  border-bottom: none;
+}
+
+.response-header-row:nth-child(even) {
+  background: var(--code-bg);
+}
+
+.response-header-name {
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.response-header-value {
+  word-break: break-all;
+}
+
+.code-mirror-editor {
+  background: #ffffff;
+}
+
+.response-body-viewer {
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: auto;
+  max-height: 480px;
+}
+
+.entity-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.entity-editor-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.entity-editor-header .ant-typography {
+  margin: 0;
+}
+
+.variables-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex: 1;
+}
+
+.variables-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.variables-section .ant-typography {
+  margin: 0;
 }
 
 @media (max-width: 767px) {

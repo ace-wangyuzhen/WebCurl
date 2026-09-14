@@ -2,7 +2,7 @@ import { TopToolbar } from "./TopToolbar";
 import { CollectionSidebar } from "./CollectionSidebar";
 import { RequestWorkspace } from "./RequestWorkspace";
 import { SettingsDrawer } from "./SettingsDrawer";
-import type { ThemeMode } from "../App";
+import type { ThemeMode } from "../theme";
 
 interface AppShellProps {
   themeMode: ThemeMode;

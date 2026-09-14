@@ -16,6 +16,7 @@ export interface CollectionInput {
   name: string;
   description?: string;
   preRequestScript?: string;
+  globals?: EnvironmentVariable[];
 }
 
 type CollectionPatch = Partial<
@@ -29,6 +30,7 @@ export const collectionRepository = {
       name: input.name,
       description: input.description ?? "",
       preRequestScript: input.preRequestScript ?? "",
+      globals: input.globals ?? [],
       createdAt: nowIso(),
       updatedAt: nowIso(),
     };
@@ -160,6 +162,7 @@ export const requestRepository = {
 };
 
 export interface EnvironmentInput {
+  collectionId: string;
   name: string;
   variables?: EnvironmentVariable[];
   isActive?: boolean;
@@ -173,6 +176,7 @@ export const environmentRepository = {
   async create(input: EnvironmentInput): Promise<EnvironmentRecord> {
     const record: EnvironmentRecord = {
       id: createId(),
+      collectionId: input.collectionId,
       name: input.name,
       variables: input.variables ?? [],
       isActive: input.isActive ?? false,
@@ -195,14 +199,16 @@ export const environmentRepository = {
     await db.environments.delete(id);
   },
 
-  async list(): Promise<EnvironmentRecord[]> {
-    return db.environments.toArray();
+  async listByCollection(collectionId: string): Promise<EnvironmentRecord[]> {
+    return db.environments
+      .where("collectionId")
+      .equals(collectionId)
+      .toArray();
   },
 
-  async setActive(id: string): Promise<void> {
-    await db.environments
-      .toCollection()
-      .modify({ isActive: false, updatedAt: nowIso() });
+  async setActive(collectionId: string, id: string): Promise<void> {
+    const collection = db.environments.where("collectionId").equals(collectionId);
+    await collection.modify({ isActive: false, updatedAt: nowIso() });
     await db.environments.update(id, { isActive: true, updatedAt: nowIso() });
   },
 };

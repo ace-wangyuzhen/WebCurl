@@ -29,6 +29,7 @@ const BOOTSTRAP = `
 (function () {
   var request = globalThis.__request;
   var environment = globalThis.__environment;
+  var globals = globalThis.__globals;
   var logs = [];
 
   function makeMap(entries) {
@@ -68,6 +69,17 @@ const BOOTSTRAP = `
       body: request.body ? request.body.content : "",
       query: makeMap(request.query || []),
       headers: makeMap(request.headers || []),
+    },
+    globals: {
+      get: function (name) {
+        return globals[name];
+      },
+      set: function (name, value) {
+        globals[name] = String(value);
+      },
+      unset: function (name) {
+        delete globals[name];
+      },
     },
     environment: {
       get: function (name) {
@@ -148,6 +160,7 @@ function errorMessage(dumped: unknown): string {
 async function runScript(input: {
   source: string;
   request: RequestDefinition;
+  globals: Record<string, string>;
   environment: Record<string, string>;
   limits: { maxLogs: number };
 }): Promise<ScriptExecutionOutput> {
@@ -158,8 +171,10 @@ async function runScript(input: {
 
   try {
     const requestHandle = evaluateJson(context, input.request);
+    const globalsHandle = evaluateJson(context, input.globals);
     const environmentHandle = evaluateJson(context, input.environment);
     context.setProp(context.global, "__request", requestHandle);
+    context.setProp(context.global, "__globals", globalsHandle);
     context.setProp(context.global, "__environment", environmentHandle);
 
     const bootstrap = context.evalCode(BOOTSTRAP);
@@ -190,6 +205,10 @@ async function runScript(input: {
       context,
       context.getProp(context.global, "__request"),
     ) as RequestDefinition;
+    const globals = dumpHandle(
+      context,
+      context.getProp(context.global, "__globals"),
+    ) as Record<string, string>;
     const environment = dumpHandle(
       context,
       context.getProp(context.global, "__environment"),
@@ -205,6 +224,7 @@ async function runScript(input: {
 
     return {
       request,
+      globals,
       environment,
       logs,
       durationMs: Date.now() - startedAt,

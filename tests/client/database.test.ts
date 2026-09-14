@@ -71,15 +71,21 @@ it("updates and removes records", async () => {
   expect(await requestRepository.get(request.id)).toBeUndefined();
 });
 
-it("tracks a single active environment", async () => {
-  const first = await environmentRepository.create({ name: "Dev" });
-  const second = await environmentRepository.create({ name: "Prod" });
+it("tracks a single active environment per collection", async () => {
+  const first = await environmentRepository.create({
+    collectionId: "c1",
+    name: "Dev",
+  });
+  const second = await environmentRepository.create({
+    collectionId: "c1",
+    name: "Prod",
+  });
 
-  await environmentRepository.setActive(first.id);
+  await environmentRepository.setActive("c1", first.id);
   expect((await environmentRepository.get(first.id))?.isActive).toBe(true);
   expect((await environmentRepository.get(second.id))?.isActive).toBe(false);
 
-  await environmentRepository.setActive(second.id);
+  await environmentRepository.setActive("c1", second.id);
   expect((await environmentRepository.get(first.id))?.isActive).toBe(false);
   expect((await environmentRepository.get(second.id))?.isActive).toBe(true);
 });

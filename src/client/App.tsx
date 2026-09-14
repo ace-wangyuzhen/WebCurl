@@ -1,8 +1,7 @@
 import { useCallback, useState } from "react";
 import { ConfigProvider, theme as antdTheme } from "antd";
 import { AppShell } from "./components/AppShell";
-
-export type ThemeMode = "light" | "dark";
+import type { ThemeMode } from "./theme";
 
 export function App() {
   const [themeMode, setThemeMode] = useState<ThemeMode>("light");

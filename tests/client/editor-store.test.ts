@@ -65,3 +65,35 @@ it("clears the selection and resets the draft", () => {
   expect(state.selectedRequestId).toBeNull();
   expect(state.draft).toEqual(createEmptyDraft());
 });
+
+it("selects a collection and loads its script", () => {
+  useEditorStore.getState().selectCollection({
+    collectionId: "c1",
+    name: "Demo",
+    preRequestScript: "console.log('collection');",
+  });
+
+  const state = useEditorStore.getState();
+  expect(state.selectedCollectionId).toBe("c1");
+  expect(state.selectedFolderId).toBeNull();
+  expect(state.selectedRequestId).toBeNull();
+  expect(state.selectedEntityName).toBe("Demo");
+  expect(state.scriptDraft).toBe("console.log('collection');");
+});
+
+it("selects a folder and updates its script draft", () => {
+  useEditorStore.getState().selectFolder({
+    collectionId: "c1",
+    folderId: "f1",
+    name: "Group A",
+    preRequestScript: "",
+  });
+
+  useEditorStore.getState().updateScriptDraft("console.log('folder');");
+
+  const state = useEditorStore.getState();
+  expect(state.selectedCollectionId).toBe("c1");
+  expect(state.selectedFolderId).toBe("f1");
+  expect(state.selectedRequestId).toBeNull();
+  expect(state.scriptDraft).toBe("console.log('folder');");
+});

@@ -23,6 +23,7 @@ it("runs scripts in order and chains their outputs", async () => {
           ...input.request,
           url: `${input.request.url}/${input.source.trim()}`,
         },
+        globals: { ...input.globals, [input.source.trim()]: "global" },
         environment: { ...input.environment, [input.source.trim()]: "ran" },
         logs: [`log:${input.source.trim()}`],
         durationMs: 0,
@@ -33,6 +34,7 @@ it("runs scripts in order and chains their outputs", async () => {
   const result = await runPreRequestScripts(
     ["collection-script", "folder-script", "request-script"],
     baseRequest,
+    {},
     {},
     { executor },
   );
@@ -45,6 +47,11 @@ it("runs scripts in order and chains their outputs", async () => {
   expect(result.request.url).toBe(
     "https://example.test/collection-script/folder-script/request-script",
   );
+  expect(result.globals).toEqual({
+    "collection-script": "global",
+    "folder-script": "global",
+    "request-script": "global",
+  });
   expect(result.environment).toEqual({
     "collection-script": "ran",
     "folder-script": "ran",
@@ -64,6 +71,7 @@ it("skips empty scripts", async () => {
       calls.push(input.source);
       return {
         request: input.request,
+        globals: input.globals,
         environment: input.environment,
         logs: [],
         durationMs: 0,
@@ -74,6 +82,7 @@ it("skips empty scripts", async () => {
   await runPreRequestScripts(
     ["", "   ", "real-script"],
     baseRequest,
+    {},
     {},
     { executor },
   );
@@ -91,6 +100,7 @@ it("propagates script errors without running later scripts", async () => {
       }
       return {
         request: input.request,
+        globals: input.globals,
         environment: input.environment,
         logs: [],
         durationMs: 0,
@@ -102,6 +112,7 @@ it("propagates script errors without running later scripts", async () => {
     runPreRequestScripts(
       ["first", "boom", "third"],
       baseRequest,
+      {},
       {},
       { executor },
     ),

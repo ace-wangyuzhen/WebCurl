@@ -31,3 +31,11 @@ window.getComputedStyle = ((element: Element, pseudoElement?: string | null) => 
   }
   return originalGetComputedStyle(element, pseudoElement);
 }) as typeof window.getComputedStyle;
+
+// jsdom does not implement Range.getClientRects, which CodeMirror's
+// measurement layer uses. Provide a no-op returning an empty list.
+if (typeof Range !== "undefined" && !Range.prototype.getClientRects) {
+  Range.prototype.getClientRects = function () {
+    return [] as unknown as DOMRectList;
+  };
+}
