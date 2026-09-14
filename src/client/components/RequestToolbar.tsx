@@ -8,9 +8,16 @@ import { useTranslation } from "../i18n";
 import { useEditorStore } from "../state/editor-store";
 import { useRuntimeStore } from "../state/runtime-store";
 
-const METHOD_OPTIONS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"].map(
-  (method) => ({ value: method, label: method }),
-);
+const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
+
+const METHOD_OPTIONS = METHODS.map((method) => ({
+  value: method,
+  label: (
+    <span className="method-option" data-method={method}>
+      {method}
+    </span>
+  ),
+}));
 
 interface RequestToolbarProps {
   onSend: () => void;
@@ -29,13 +36,15 @@ export function RequestToolbar({ onSend, onCancel }: RequestToolbarProps) {
   return (
     <div>
       <div className="request-toolbar">
-        <Select
-          className="method-select"
-          value={draft.method}
-          options={METHOD_OPTIONS}
-          onChange={(method) => updateDraft({ method })}
-          aria-label={t("request.method")}
-        />
+        <div className="method-select" data-method={draft.method}>
+          <Select
+            value={draft.method}
+            options={METHOD_OPTIONS}
+            onChange={(method) => updateDraft({ method })}
+            aria-label={t("request.method")}
+            popupMatchSelectWidth={false}
+          />
+        </div>
         <Input
           className="url-input"
           value={draft.url}

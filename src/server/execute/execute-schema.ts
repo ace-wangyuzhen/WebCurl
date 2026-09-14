@@ -53,10 +53,28 @@ function validateTargetUrl(rawUrl: string): void {
   }
 }
 
+const MAX_REPORTED_ISSUES = 8;
+
+function formatValidationIssues(
+  issues: Array<{ path: PropertyKey[]; message: string }>,
+): string {
+  const shown = issues.slice(0, MAX_REPORTED_ISSUES).map((issue) => {
+    const location = issue.path.length > 0 ? issue.path.join(".") : "request";
+    return `${location}: ${issue.message}`;
+  });
+  const remainder = issues.length - shown.length;
+  const suffix = remainder > 0 ? ` (+${remainder} more)` : "";
+  return shown.join("; ") + suffix;
+}
+
 export function validateExecuteRequest(input: unknown): ExecuteRequestInput {
   const parsed = executeRequestSchema.safeParse(input);
   if (!parsed.success) {
-    throw new AppError("INVALID_REQUEST", "Invalid execute request", 400);
+    throw new AppError(
+      "INVALID_REQUEST",
+      formatValidationIssues(parsed.error.issues) || "Invalid execute request",
+      400,
+    );
   }
 
   validateTargetUrl(parsed.data.url);

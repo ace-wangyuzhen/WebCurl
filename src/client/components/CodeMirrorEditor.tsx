@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { minimalSetup } from "codemirror";
 import { EditorView, lineNumbers } from "@codemirror/view";
 import { EditorState, type Extension } from "@codemirror/state";
+import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import { tags } from "@lezer/highlight";
 import { json } from "@codemirror/lang-json";
 import { javascript } from "@codemirror/lang-javascript";
 
@@ -25,6 +27,67 @@ function languageExtension(language: EditorLanguage): Extension {
   }
   return [];
 }
+
+// Colors reference CSS variables so highlighting follows the active theme
+// without re-creating the editor state on toggle.
+const highlightStyle = HighlightStyle.define([
+  { tag: tags.keyword, color: "var(--cm-keyword)" },
+  { tag: [tags.string, tags.special(tags.string)], color: "var(--cm-string)" },
+  {
+    tag: [tags.number, tags.bool, tags.null, tags.atom],
+    color: "var(--cm-number)",
+  },
+  { tag: tags.comment, color: "var(--cm-comment)", fontStyle: "italic" },
+  {
+    tag: [tags.propertyName, tags.attributeName],
+    color: "var(--cm-property)",
+  },
+  {
+    tag: [tags.definition(tags.variableName), tags.function(tags.variableName)],
+    color: "var(--cm-def)",
+  },
+  { tag: [tags.operator, tags.punctuation], color: "var(--cm-operator)" },
+  { tag: tags.variableName, color: "var(--cm-variable)" },
+  { tag: [tags.meta, tags.tagName], color: "var(--cm-atom)" },
+  { tag: [tags.heading, tags.strong], fontWeight: "bold" },
+  { tag: tags.invalid, color: "var(--status-error)" },
+]);
+
+const editorTheme = (minHeight: number) =>
+  EditorView.theme({
+    "&": {
+      minHeight: `${minHeight}px`,
+      backgroundColor: "var(--code-bg)",
+      color: "var(--ink)",
+    },
+    ".cm-scroller": {
+      minHeight: `${minHeight}px`,
+      overflow: "auto",
+      fontFamily: "var(--font-mono)",
+    },
+    ".cm-content": {
+      caretColor: "var(--ink)",
+      lineHeight: "1.6",
+    },
+    ".cm-gutters": {
+      backgroundColor: "transparent",
+      borderRight: "1px solid var(--border-color)",
+      color: "var(--text-tertiary)",
+    },
+    ".cm-activeLine": { backgroundColor: "var(--surface-hover)" },
+    ".cm-activeLineGutter": {
+      backgroundColor: "var(--surface-hover)",
+      color: "var(--text-secondary)",
+    },
+    "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
+      backgroundColor: "var(--accent-soft-strong)",
+    },
+    ".cm-cursor": { borderLeftColor: "var(--ink)" },
+    ".cm-matchingBracket": {
+      backgroundColor: "var(--accent-soft)",
+      outline: "1px solid var(--border-strong)",
+    },
+  });
 
 export function CodeMirrorEditor({
   value,
@@ -53,15 +116,8 @@ export function CodeMirrorEditor({
           minimalSetup,
           lineNumbers(),
           languageExtension(language),
-          EditorView.theme({
-            "&": { minHeight: `${minHeight}px` },
-            ".cm-scroller": { minHeight: `${minHeight}px`, overflow: "auto" },
-            ".cm-gutters": {
-              backgroundColor: "transparent",
-              borderRight: "1px solid var(--border-color)",
-              color: "var(--text-secondary)",
-            },
-          }),
+          syntaxHighlighting(highlightStyle),
+          editorTheme(minHeight),
           ...(readOnly
             ? [EditorState.readOnly.of(true), EditorView.editable.of(false)]
             : []),
@@ -85,7 +141,7 @@ export function CodeMirrorEditor({
       view.destroy();
       viewRef.current = null;
     };
-  }, [language, failed, readOnly]);
+  }, [language, failed, readOnly, minHeight]);
 
   useEffect(() => {
     const view = viewRef.current;

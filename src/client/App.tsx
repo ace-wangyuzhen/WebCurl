@@ -1,10 +1,10 @@
 import { useCallback, useState } from "react";
-import { ConfigProvider, theme as antdTheme } from "antd";
+import { ConfigProvider } from "antd";
 import enUS from "antd/locale/en_US";
 import zhCN from "antd/locale/zh_CN";
 import { AppShell } from "./components/AppShell";
 import { useLanguageStore } from "./i18n";
-import type { ThemeMode } from "./theme";
+import { buildAntdTheme, type ThemeMode } from "./theme";
 
 export function App() {
   const [themeMode, setThemeMode] = useState<ThemeMode>("light");
@@ -25,12 +25,7 @@ export function App() {
   return (
     <ConfigProvider
       locale={language === "zh" ? zhCN : enUS}
-      theme={{
-        algorithm:
-          themeMode === "dark"
-            ? antdTheme.darkAlgorithm
-            : antdTheme.defaultAlgorithm,
-      }}
+      theme={buildAntdTheme(themeMode)}
     >
       <AppShell
         themeMode={themeMode}

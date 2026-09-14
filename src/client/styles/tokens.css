@@ -1,36 +1,158 @@
-:root,
-:root[data-theme="light"] {
+/* ------------------------------------------------------------------ *
+ * Web Curl design tokens
+ * A single source of truth for color, type, spacing, radius and motion.
+ * Both themes define the same variables so components stay theme-agnostic.
+ * ------------------------------------------------------------------ */
+
+:root {
+  /* Layout metrics */
   --toolbar-height: 56px;
-  --sidebar-width: 260px;
-  --app-bg: #f5f5f5;
-  --surface-bg: #ffffff;
-  --border-color: #e5e7eb;
-  --code-bg: #f6f8fa;
-  --text-secondary: #8c8c8c;
-  --method-get: #16a34a;
-  --method-post: #2563eb;
-  --method-put: #d97706;
-  --method-patch: #7c3aed;
-  --method-delete: #dc2626;
-  --method-head: #64748b;
-  --method-options: #64748b;
-  --status-ok: #16a34a;
-  --status-error: #dc2626;
+  --sidebar-width: 264px;
+
+  /* Type */
+  --font-sans:
+    Inter, "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    "JetBrains Mono", "SF Mono", SFMono-Regular, ui-monospace, "Cascadia Code",
+    Consolas, "Liberation Mono", Menlo, monospace;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
 }
 
+/* ------------------------------------------------------------------ *
+ * Light theme
+ * ------------------------------------------------------------------ */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* Surfaces */
+  --app-bg: #f4f5f8;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #eef0f4;
+  --surface-hover: #f2f4f7;
+  --code-bg: #eef0f4;
+
+  /* Hairlines */
+  --border-color: #e4e6ec;
+  --border-strong: #d2d6df;
+
+  /* Ink */
+  --ink: #171a21;
+  --text-secondary: #5b6270;
+  --text-tertiary: #8b92a0;
+
+  /* Brand accent */
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-active: #3730a3;
+  --accent-text: #4f46e5;
+  --accent-soft: rgba(79, 70, 229, 0.1);
+  --accent-soft-strong: rgba(79, 70, 229, 0.16);
+  --accent-contrast: #ffffff;
+
+  /* HTTP method colors */
+  --method-get: #0f9157;
+  --method-post: #2463eb;
+  --method-put: #b96a0b;
+  --method-patch: #8b46d6;
+  --method-delete: #d43b3b;
+  --method-head: #6b7280;
+  --method-options: #6b7280;
+
+  /* Status */
+  --status-error: #d43b3b;
+  --danger-bg: rgba(212, 59, 59, 0.06);
+  --danger-border: rgba(212, 59, 59, 0.28);
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-md: 0 6px 20px -6px rgba(16, 24, 40, 0.12);
+
+  /* Code syntax */
+  --cm-keyword: #7c3aed;
+  --cm-string: #0f9157;
+  --cm-number: #b45309;
+  --cm-comment: #8b92a0;
+  --cm-variable: #171a21;
+  --cm-property: #2463eb;
+  --cm-operator: #5b6270;
+  --cm-atom: #0e7490;
+  --cm-def: #2463eb;
+}
+
+/* ------------------------------------------------------------------ *
+ * Dark theme
+ * ------------------------------------------------------------------ */
 :root[data-theme="dark"] {
-  --app-bg: #141414;
-  --surface-bg: #1f1f1f;
-  --border-color: #303030;
-  --code-bg: #161b22;
-  --text-secondary: #a6a6a6;
-  --method-get: #4ade80;
+  color-scheme: dark;
+
+  /* Surfaces */
+  --app-bg: #0f1218;
+  --surface: #161b23;
+  --surface-raised: #1d232e;
+  --surface-sunken: #10141c;
+  --surface-hover: #1c222c;
+  --code-bg: #10141c;
+
+  /* Hairlines */
+  --border-color: #262d38;
+  --border-strong: #39424f;
+
+  /* Ink */
+  --ink: #e7eaf0;
+  --text-secondary: #9aa4b2;
+  --text-tertiary: #66707f;
+
+  /* Brand accent */
+  --accent: #4f46e5;
+  --accent-hover: #5b54f2;
+  --accent-active: #6d66f5;
+  --accent-text: #a5b4fc;
+  --accent-soft: rgba(129, 140, 248, 0.16);
+  --accent-soft-strong: rgba(129, 140, 248, 0.24);
+  --accent-contrast: #ffffff;
+
+  /* HTTP method colors */
+  --method-get: #34d399;
   --method-post: #60a5fa;
   --method-put: #fbbf24;
-  --method-patch: #a78bfa;
+  --method-patch: #c084fc;
   --method-delete: #f87171;
   --method-head: #94a3b8;
   --method-options: #94a3b8;
-  --status-ok: #4ade80;
+
+  /* Status */
   --status-error: #f87171;
+  --danger-bg: rgba(248, 113, 113, 0.1);
+  --danger-border: rgba(248, 113, 113, 0.3);
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+
+  /* Code syntax */
+  --cm-keyword: #c4b5fd;
+  --cm-string: #86efac;
+  --cm-number: #fcd34d;
+  --cm-comment: #66707f;
+  --cm-variable: #e7eaf0;
+  --cm-property: #93c5fd;
+  --cm-operator: #9aa4b2;
+  --cm-atom: #5eead4;
+  --cm-def: #93c5fd;
 }

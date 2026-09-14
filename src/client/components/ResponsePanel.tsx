@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Alert, Button, Empty, Space, Tag, Typography } from "antd";
-import { CopyOutlined } from "@ant-design/icons";
+import { Button, Empty, Space, Tag, Typography } from "antd";
+import { CloseCircleFilled, CopyOutlined } from "@ant-design/icons";
 import { useRuntimeStore } from "../state/runtime-store";
 import { useTranslation } from "../i18n";
 import { CodeMirrorEditor, type EditorLanguage } from "./CodeMirrorEditor";
@@ -86,13 +86,15 @@ export function ResponsePanel() {
   if (error) {
     return (
       <div className="response-panel" role="region" aria-label={t("response.region")}>
-        <div className="response-empty">
-          <Alert
-            type="error"
-            showIcon
-            message={error.code}
-            description={error.message}
+        <div className="response-error" role="alert">
+          <CloseCircleFilled
+            className="response-error-icon"
+            aria-hidden="true"
           />
+          <div className="response-error-body">
+            <div className="response-error-code">{error.code}</div>
+            <div className="response-error-message">{error.message}</div>
+          </div>
         </div>
       </div>
     );

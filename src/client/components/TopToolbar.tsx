@@ -153,9 +153,12 @@ export function TopToolbar({
 
   return (
     <header className="top-toolbar">
-      <Typography.Title level={3} className="top-toolbar-title">
-        Web Curl
-      </Typography.Title>
+      <div className="brand">
+        <span className="brand-mark" aria-hidden="true">
+          {"$"}
+        </span>
+        <h1 className="brand-name">Web Curl</h1>
+      </div>
 
       <div className="top-toolbar-actions">
         <Dropdown
@@ -231,6 +234,7 @@ export function TopToolbar({
 
         <Tooltip title={t("toolbar.language")}>
           <Button
+            type="text"
             aria-label={t("toolbar.language")}
             onClick={() => setLanguage(language === "zh" ? "en" : "zh")}
           >
@@ -240,6 +244,7 @@ export function TopToolbar({
 
         <Tooltip title={t("toolbar.import")}>
           <Button
+            type="text"
             icon={<UploadOutlined />}
             aria-label={t("toolbar.import")}
             onClick={() => fileInputRef.current?.click()}
@@ -247,6 +252,7 @@ export function TopToolbar({
         </Tooltip>
         <Tooltip title={t("toolbar.export")}>
           <Button
+            type="text"
             icon={<DownloadOutlined />}
             aria-label={t("toolbar.export")}
             onClick={() => void handleExport()}
@@ -254,6 +260,7 @@ export function TopToolbar({
         </Tooltip>
         <Tooltip title={t("toolbar.settings")}>
           <Button
+            type="text"
             icon={<SettingOutlined />}
             aria-label={t("toolbar.settings")}
             onClick={onOpenSettings}
@@ -267,6 +274,7 @@ export function TopToolbar({
           }
         >
           <Button
+            type="text"
             icon={themeMode === "dark" ? <SunOutlined /> : <MoonOutlined />}
             aria-label={t("toolbar.theme.toggle")}
             onClick={onToggleTheme}
