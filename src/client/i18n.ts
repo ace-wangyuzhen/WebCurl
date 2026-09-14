@@ -127,6 +127,8 @@ const zh = {
   "response.copyAria": "复制响应正文",
   "response.pretty": "格式化",
   "response.raw": "原始",
+  "response.truncated":
+    "响应过大，仅渲染前 {shown} KB（共 {total} KB）。复制可获取完整内容。",
   "curl.copyAria": "复制 curl 命令",
 
   // History
@@ -137,7 +139,24 @@ const zh = {
   "history.replayAria": "回放 {url}",
 
   // Settings drawer
-  "settings.placeholder": "资源限制和工作区设置将在这里显示。",
+  "settings.section.request": "请求默认",
+  "settings.section.response": "响应展示",
+  "settings.section.data": "数据管理",
+  "settings.timeout": "默认超时（毫秒）",
+  "settings.followRedirects": "跟随重定向",
+  "settings.maxRedirects": "最大重定向数",
+  "settings.prettyByDefault": "默认格式化响应",
+  "settings.wrapLines": "响应自动换行",
+  "settings.maxRenderBytes": "响应渲染上限（KB）",
+  "settings.storageUsage": "本地存储占用",
+  "settings.storageUnknown": "无法获取存储用量",
+  "settings.reset": "清空全部数据 / 重置工作区",
+  "settings.resetTitle": "重置工作区",
+  "settings.resetDesc":
+    "这将永久删除所有集合、文件夹、请求、环境、历史记录和设置，且无法恢复。",
+  "settings.resetConfirmHint": "请输入 {word} 以确认",
+  "settings.resetConfirmAria": "输入确认词",
+  "settings.resetDone": "工作区已重置",
 };
 
 const en: Record<keyof typeof zh, string> = {
@@ -245,13 +264,32 @@ const en: Record<keyof typeof zh, string> = {
   "response.copyAria": "Copy response body",
   "response.pretty": "Pretty",
   "response.raw": "Raw",
+  "response.truncated":
+    "Response too large — rendering the first {shown} KB of {total} KB. Copy to get the full body.",
   "curl.copyAria": "Copy curl command",
   "history.title": "History",
   "history.empty": "No history yet",
   "history.clear": "Clear",
   "history.clearConfirm": "Clear all history?",
   "history.replayAria": "Replay {url}",
-  "settings.placeholder": "Resource limits and workspace settings will appear here.",
+  "settings.section.request": "Request defaults",
+  "settings.section.response": "Response display",
+  "settings.section.data": "Data management",
+  "settings.timeout": "Default timeout (ms)",
+  "settings.followRedirects": "Follow redirects",
+  "settings.maxRedirects": "Max redirects",
+  "settings.prettyByDefault": "Pretty-print by default",
+  "settings.wrapLines": "Wrap long lines",
+  "settings.maxRenderBytes": "Response render cap (KB)",
+  "settings.storageUsage": "Local storage usage",
+  "settings.storageUnknown": "Storage usage unavailable",
+  "settings.reset": "Clear all data / Reset workspace",
+  "settings.resetTitle": "Reset workspace",
+  "settings.resetDesc":
+    "This permanently deletes all collections, folders, requests, environments, history, and settings. This cannot be undone.",
+  "settings.resetConfirmHint": "Type {word} to confirm",
+  "settings.resetConfirmAria": "Confirmation word",
+  "settings.resetDone": "Workspace has been reset",
 };
 
 export type MessageKey = keyof typeof zh;

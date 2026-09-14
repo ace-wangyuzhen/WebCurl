@@ -30,6 +30,7 @@ export const executeRequestSchema = z.object({
     .object({
       timeoutMs: z.number().int().min(1).max(300_000).optional(),
       followRedirects: z.boolean().optional(),
+      maxRedirects: z.number().int().min(0).max(50).optional(),
     })
     .optional(),
 });

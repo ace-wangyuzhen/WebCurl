@@ -4,6 +4,7 @@ export interface ExecuteRequest extends RequestDefinition {
   options?: {
     timeoutMs?: number;
     followRedirects?: boolean;
+    maxRedirects?: number;
   };
 }
 

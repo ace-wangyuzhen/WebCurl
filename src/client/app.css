@@ -614,9 +614,23 @@ body {
   font-family: var(--font-mono);
   font-size: 12px;
   line-height: 1.6;
-  overflow-x: auto;
-  white-space: pre;
-  word-break: break-all;
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.curl-token-cmd {
+  color: var(--cm-keyword);
+  font-weight: 600;
+}
+
+.curl-token-flag {
+  color: var(--cm-property);
+}
+
+.curl-token-string {
+  color: var(--cm-string);
 }
 
 /* ------------------------------------------------------------------ *
@@ -861,3 +875,49 @@ body {
     order: 10;
   }
 }
+
+/* Settings drawer */
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settings-section .ant-typography {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.settings-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.settings-danger {
+  padding: 16px;
+  border: 1px solid var(--status-error);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--status-error) 6%, transparent);
+}
+
+/* Truncated response notice */
+.response-body-truncated {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--surface-hover);
+  border: 1px solid var(--border-color);
+  border-bottom: none;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+

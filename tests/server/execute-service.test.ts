@@ -231,3 +231,24 @@ it("enforces the redirect limit", async () => {
 
   await upstream.close();
 });
+
+it("honors options.maxRedirects over the server config", async () => {
+  const upstream = await createUpstreamServer();
+  const result = await executeRequest(
+    {
+      method: "GET",
+      url: `${upstream.url}/redirect-loop`,
+      query: [],
+      headers: [],
+      body: { type: "none", content: "" },
+      options: { followRedirects: true, maxRedirects: 0 },
+    },
+    // Server config is generous; the per-request option must still win.
+    { config: { ...DEFAULT_CONFIG, maxRedirects: 100 } },
+  );
+
+  expect(result.ok).toBe(false);
+  expect(result.error?.code).toBe("UPSTREAM_RESPONSE_ERROR");
+
+  await upstream.close();
+});

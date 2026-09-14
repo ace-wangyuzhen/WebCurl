@@ -181,6 +181,7 @@ export async function executeRequest(
   const body = buildBody(input.body);
   const followRedirects = input.options?.followRedirects ?? false;
   const timeoutMs = input.options?.timeoutMs ?? config.requestTimeoutMs;
+  const maxRedirects = input.options?.maxRedirects ?? config.maxRedirects;
 
   const controller = new AbortController();
   const callerSignal = options.signal;
@@ -211,7 +212,7 @@ export async function executeRequest(
       url,
       { method: input.method, headers, body, signal: controller.signal },
       followRedirects,
-      config.maxRedirects,
+      maxRedirects,
     );
 
     status = response.status;

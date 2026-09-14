@@ -16,6 +16,7 @@ interface CodeMirrorEditorProps {
   ariaLabel: string;
   minHeight?: number;
   readOnly?: boolean;
+  wrap?: boolean;
 }
 
 function languageExtension(language: EditorLanguage): Extension {
@@ -96,6 +97,7 @@ export function CodeMirrorEditor({
   ariaLabel,
   minHeight = 120,
   readOnly = false,
+  wrap = false,
 }: CodeMirrorEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -118,6 +120,7 @@ export function CodeMirrorEditor({
           languageExtension(language),
           syntaxHighlighting(highlightStyle),
           editorTheme(minHeight),
+          ...(wrap ? [EditorView.lineWrapping] : []),
           ...(readOnly
             ? [EditorState.readOnly.of(true), EditorView.editable.of(false)]
             : []),
@@ -141,7 +144,7 @@ export function CodeMirrorEditor({
       view.destroy();
       viewRef.current = null;
     };
-  }, [language, failed, readOnly, minHeight]);
+  }, [language, failed, readOnly, minHeight, wrap]);
 
   useEffect(() => {
     const view = viewRef.current;

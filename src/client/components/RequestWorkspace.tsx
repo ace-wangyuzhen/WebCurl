@@ -5,6 +5,7 @@ import { RequestTabs } from "./RequestTabs";
 import { ResponsePanel } from "./ResponsePanel";
 import { CollectionFolderEditor } from "./CollectionFolderEditor";
 import { CollectionVariablesPanel } from "./CollectionVariablesPanel";
+import { FolderRequestList } from "./FolderRequestList";
 import type { RequestDefinition } from "../../shared/request-types";
 import { executeRequest, ClientRequestError } from "../api/execute-client";
 import { buildCurlCommand } from "../api/curl";
@@ -27,6 +28,7 @@ import {
 } from "../scripts/variable-substitution";
 import { useEditorStore } from "../state/editor-store";
 import { useRuntimeStore, type RuntimeError } from "../state/runtime-store";
+import { useSettingsStore } from "../state/settings-store";
 
 function normalizeError(error: unknown): RuntimeError {
   if (
@@ -152,17 +154,25 @@ export function RequestWorkspace() {
       runtime.setUnresolvedVariables(substitution.unresolved);
       runtime.setActiveCurl(buildCurlCommand(substitution.value));
 
-      const response = await executeRequest(
-        substitution.value,
-        controller.signal,
-      );
+      // Apply the global request-execution defaults from settings.
+      const settings = useSettingsStore.getState();
+      const executed = {
+        ...substitution.value,
+        options: {
+          timeoutMs: settings.defaultTimeoutMs,
+          followRedirects: settings.followRedirects,
+          maxRedirects: settings.maxRedirects,
+        },
+      };
+
+      const response = await executeRequest(executed, controller.signal);
       runtime.finishSend(response);
 
       if (response.ok) {
         try {
           await historyRepository.add({
             requestId: selectedRequestId,
-            requestSnapshot: substitution.value,
+            requestSnapshot: executed,
             responseSnapshot: response,
           });
         } catch {
@@ -200,6 +210,13 @@ export function RequestWorkspace() {
     return (
       <div className="request-workspace-inner">
         <CollectionFolderEditor />
+        {selectedFolderId && selectedCollectionId ? (
+          <FolderRequestList
+            key={selectedFolderId}
+            collectionId={selectedCollectionId}
+            folderId={selectedFolderId}
+          />
+        ) : null}
         {!selectedFolderId && selectedCollectionId ? (
           <CollectionVariablesPanel
             key={selectedCollectionId}
