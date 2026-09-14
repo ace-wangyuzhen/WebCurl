@@ -231,6 +231,7 @@ export function CollectionSidebar() {
           <Tree
             treeData={treeData}
             selectedKeys={selectedRequestId ? [selectedRequestId] : []}
+            defaultExpandAll
             onSelect={handleSelect}
           />
         )}
