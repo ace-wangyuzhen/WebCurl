@@ -1,13 +1,8 @@
-:root,
-body,
-#root {
-  min-height: 100%;
-}
-
 html,
 body,
 #root {
   margin: 0;
+  min-height: 100%;
 }
 
 body {
@@ -15,19 +10,122 @@ body {
 }
 
 .app-shell {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
+  background: var(--app-bg);
 }
 
 .top-toolbar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: var(--toolbar-height);
+  padding: 0 16px;
+  background: var(--surface-bg);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
-.top-toolbar .ant-typography {
-  margin: 0;
-  color: #fff;
+.top-toolbar-title {
+  margin: 0 !important;
+  white-space: nowrap;
+}
+
+.top-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.environment-select {
+  min-width: 140px;
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.collection-sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  background: var(--surface-bg);
+  border-right: 1px solid var(--border-color);
+  overflow-y: auto;
+}
+
+.collection-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 12px 8px;
+}
+
+.collection-sidebar-content {
+  padding: 0 8px 12px;
 }
 
 .request-workspace {
-  padding: 24px;
+  flex: 1;
+  min-width: 0;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.request-workspace-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100%;
+}
+
+.request-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.method-select {
+  width: 120px;
+  flex-shrink: 0;
+}
+
+.url-input {
+  flex: 1;
+}
+
+.request-tabs {
+  flex: 1;
+}
+
+.response-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  padding: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+@media (max-width: 767px) {
+  .app-body {
+    flex-direction: column;
+  }
+
+  .collection-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .request-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .url-input {
+    flex-basis: 100%;
+  }
 }

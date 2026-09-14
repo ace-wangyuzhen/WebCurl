@@ -1,0 +1,32 @@
+:root,
+:root[data-theme="light"] {
+  --toolbar-height: 56px;
+  --sidebar-width: 260px;
+  --app-bg: #f5f5f5;
+  --surface-bg: #ffffff;
+  --border-color: #e5e7eb;
+  --method-get: #16a34a;
+  --method-post: #2563eb;
+  --method-put: #d97706;
+  --method-patch: #7c3aed;
+  --method-delete: #dc2626;
+  --method-head: #64748b;
+  --method-options: #64748b;
+  --status-ok: #16a34a;
+  --status-error: #dc2626;
+}
+
+:root[data-theme="dark"] {
+  --app-bg: #141414;
+  --surface-bg: #1f1f1f;
+  --border-color: #303030;
+  --method-get: #4ade80;
+  --method-post: #60a5fa;
+  --method-put: #fbbf24;
+  --method-patch: #a78bfa;
+  --method-delete: #f87171;
+  --method-head: #94a3b8;
+  --method-options: #94a3b8;
+  --status-ok: #4ade80;
+  --status-error: #f87171;
+}
