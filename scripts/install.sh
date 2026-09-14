@@ -50,7 +50,12 @@ case "${ARCHIVE}" in
 esac
 
 log "Downloading ${BOS_URL}"
-wget -q -O "${ARCHIVE}" "${BOS_URL}" || die "Download failed: ${BOS_URL}"
+# -nv keeps normal output brief but still prints the HTTP status / reason on
+# failure. --no-check-certificate skips TLS hostname/cert verification, which is
+# needed for BOS virtual-hosted URLs whose cert (*.bcebos.com) does not match a
+# multi-level host like <bucket>.bj.bcebos.com.
+wget -nv --no-check-certificate -O "${ARCHIVE}" "${BOS_URL}" ||
+  die "Download failed: ${BOS_URL}"
 
 log "Extracting $(basename "${ARCHIVE}")"
 tar -xzf "${ARCHIVE}" -C "${APP_HOME}" || die "Failed to extract ${ARCHIVE}"
@@ -82,12 +87,16 @@ fi
 port_in_use() {
   local port="$1"
   if command -v ss >/dev/null 2>&1; then
-    ss -ltnH "( sport = :${port} )" 2>/dev/null | grep -q .
+    # List listening TCP sockets and match the local port exactly. Avoid ss's
+    # filter DSL ("( sport = :PORT )"), which is parsed inconsistently across
+    # iproute2 versions and can fall back to listing every socket -- making
+    # every candidate port look occupied.
+    ss -ltn 2>/dev/null | awk '{print $4}' | grep -qE "[:.]${port}\$"
   elif command -v lsof >/dev/null 2>&1; then
     lsof -iTCP:"${port}" -sTCP:LISTEN -Pn >/dev/null 2>&1
   else
     # Fallback: a successful TCP connect means something is already listening.
-    (exec 3<>"/dev/tcp/${HOST}/${port}") >/dev/null 2>&1 &&
+    (exec 3<>"/dev/tcp/127.0.0.1/${port}") >/dev/null 2>&1 &&
       { exec 3>&- 3<&-; return 0; } || return 1
   fi
 }

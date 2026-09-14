@@ -96,7 +96,19 @@ export async function buildApp(
     });
   });
 
-  app.register(helmet);
+  // The server is served over plain HTTP, so don't emit headers that push
+  // browsers onto HTTPS. Helmet's default CSP includes an
+  // `upgrade-insecure-requests` directive (which upgrades http:// requests to
+  // https:// even on the initial load) and HSTS; both are removed here.
+  app.register(helmet, {
+    strictTransportSecurity: false,
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        "upgrade-insecure-requests": null,
+      },
+    },
+  });
 
   if (staticRoot !== undefined) {
     app.register(fastifyStatic, { root: staticRoot });
