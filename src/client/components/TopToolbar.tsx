@@ -15,6 +15,7 @@ import {
   DownloadOutlined,
   EditOutlined,
   EnvironmentOutlined,
+  HistoryOutlined,
   MoonOutlined,
   PlusOutlined,
   SettingOutlined,
@@ -32,6 +33,7 @@ interface TopToolbarProps {
   themeMode: ThemeMode;
   onToggleTheme: () => void;
   onOpenSettings: () => void;
+  onOpenHistory: () => void;
 }
 
 interface EnvModalState {
@@ -44,6 +46,7 @@ export function TopToolbar({
   themeMode,
   onToggleTheme,
   onOpenSettings,
+  onOpenHistory,
 }: TopToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t, language } = useTranslation();
@@ -256,6 +259,14 @@ export function TopToolbar({
             icon={<DownloadOutlined />}
             aria-label={t("toolbar.export")}
             onClick={() => void handleExport()}
+          />
+        </Tooltip>
+        <Tooltip title={t("history.title")}>
+          <Button
+            type="text"
+            icon={<HistoryOutlined />}
+            aria-label={t("history.title")}
+            onClick={onOpenHistory}
           />
         </Tooltip>
         <Tooltip title={t("toolbar.settings")}>

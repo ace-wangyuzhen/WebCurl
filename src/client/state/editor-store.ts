@@ -55,6 +55,7 @@ interface EditorState {
   selectCollection: (selection: CollectionSelection) => void;
   selectFolder: (selection: FolderSelection) => void;
   updateDraft: (patch: Partial<RequestDraft>) => void;
+  loadRequestDraft: (draft: RequestDraft) => void;
   updateScriptDraft: (script: string) => void;
   updateSelectedEntityName: (name: string) => void;
   clearSelection: () => void;
@@ -102,6 +103,16 @@ export const useEditorStore = create<EditorState>((set) => ({
 
   updateDraft: (patch) =>
     set((state) => ({ draft: { ...state.draft, ...patch } })),
+
+  loadRequestDraft: (draft) =>
+    set({
+      selectedCollectionId: null,
+      selectedFolderId: null,
+      selectedRequestId: null,
+      selectedEntityName: "",
+      draft: { ...draft },
+      scriptDraft: "",
+    }),
 
   updateScriptDraft: (script) => set({ scriptDraft: script }),
 

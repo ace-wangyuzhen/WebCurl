@@ -15,6 +15,7 @@ interface RuntimeState {
   unresolvedVariables: string[];
   startSend: () => void;
   finishSend: (response: ExecuteResponse) => void;
+  showResponse: (response: ExecuteResponse) => void;
   failSend: (error: RuntimeError) => void;
   cancelSend: () => void;
   appendLogs: (logs: string[]) => void;
@@ -43,6 +44,16 @@ export const useRuntimeStore = create<RuntimeState>((set) => ({
 
   finishSend: (response) =>
     set({ isSending: false, activeResponse: response, activeError: null }),
+
+  showResponse: (response) =>
+    set({
+      isSending: false,
+      activeResponse: response,
+      activeError: null,
+      activeCurl: null,
+      scriptLogs: [],
+      unresolvedVariables: [],
+    }),
 
   failSend: (error) =>
     set({ isSending: false, activeResponse: null, activeError: error }),

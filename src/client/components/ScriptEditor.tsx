@@ -20,13 +20,15 @@ export function ScriptEditor() {
         ariaLabel={t("script.label")}
       />
 
-      <div className="script-logs" role="log" aria-label={t("script.logs")}>
-        {scriptLogs.map((log, index) => (
-          <div key={index} className="script-log-line">
-            {log}
-          </div>
-        ))}
-      </div>
+      {scriptLogs.length > 0 ? (
+        <div className="script-logs" role="log" aria-label={t("script.logs")}>
+          {scriptLogs.map((log, index) => (
+            <div key={index} className="script-log-line">
+              {log}
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

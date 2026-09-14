@@ -717,6 +717,117 @@ body {
 }
 
 /* ------------------------------------------------------------------ *
+ * History drawer
+ * ------------------------------------------------------------------ */
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.history-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.history-item:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}
+
+.history-item:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.history-item-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.history-method {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.history-method[data-method="GET"] {
+  color: var(--method-get);
+}
+.history-method[data-method="POST"] {
+  color: var(--method-post);
+}
+.history-method[data-method="PUT"] {
+  color: var(--method-put);
+}
+.history-method[data-method="PATCH"] {
+  color: var(--method-patch);
+}
+.history-method[data-method="DELETE"] {
+  color: var(--method-delete);
+}
+.history-method[data-method="HEAD"] {
+  color: var(--method-head);
+}
+.history-method[data-method="OPTIONS"] {
+  color: var(--method-options);
+}
+
+.history-url {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.history-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.history-status {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.history-time {
+  color: var(--text-tertiary);
+}
+
+.history-duration {
+  margin-left: auto;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ *
  * Responsive
  * ------------------------------------------------------------------ */
 

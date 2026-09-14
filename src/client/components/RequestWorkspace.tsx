@@ -1,4 +1,5 @@
 import { useCallback, useRef } from "react";
+import { message } from "antd";
 import { RequestToolbar } from "./RequestToolbar";
 import { RequestTabs } from "./RequestTabs";
 import { ResponsePanel } from "./ResponsePanel";
@@ -12,7 +13,9 @@ import {
   environmentRepository,
   folderRepository,
   historyRepository,
+  requestRepository,
 } from "../db/repositories";
+import { useTranslation } from "../i18n";
 import {
   createWorkerScriptExecutor,
   runPreRequestScripts,
@@ -39,6 +42,7 @@ function normalizeError(error: unknown): RuntimeError {
 }
 
 export function RequestWorkspace() {
+  const { t } = useTranslation();
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const selectedRequestId = useEditorStore((state) => state.selectedRequestId);
@@ -166,6 +170,22 @@ export function RequestWorkspace() {
     abortControllerRef.current?.abort();
   }, []);
 
+  const handleSave = useCallback(async () => {
+    const { draft, selectedRequestId } = useEditorStore.getState();
+    if (!selectedRequestId) {
+      return;
+    }
+    await requestRepository.update(selectedRequestId, {
+      method: draft.method,
+      url: draft.url,
+      queryParams: draft.queryParams,
+      headers: draft.headers,
+      body: draft.body,
+      preRequestScript: draft.preRequestScript,
+    });
+    void message.success(t("request.saved"));
+  }, [t]);
+
   if (!selectedRequestId && (selectedCollectionId || selectedFolderId)) {
     return (
       <div className="request-workspace-inner">
@@ -182,7 +202,11 @@ export function RequestWorkspace() {
 
   return (
     <div className="request-workspace-inner">
-      <RequestToolbar onSend={() => void handleSend()} onCancel={handleCancel} />
+      <RequestToolbar
+        onSend={() => void handleSend()}
+        onCancel={handleCancel}
+        onSave={() => void handleSave()}
+      />
       <RequestTabs />
       <ResponsePanel />
     </div>

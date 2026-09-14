@@ -205,6 +205,40 @@ export function CollectionSidebar() {
     };
   }, [load, workspaceVersion]);
 
+  // Auto-select the first request when nothing is selected yet (e.g. on first
+  // launch), so the editor always has a request to edit and save.
+  useEffect(() => {
+    if (loading) {
+      return;
+    }
+    const state = useEditorStore.getState();
+    if (
+      state.selectedRequestId ||
+      state.selectedFolderId ||
+      state.selectedCollectionId
+    ) {
+      return;
+    }
+    const first = requests[0];
+    if (!first) {
+      return;
+    }
+    useEditorStore.getState().selectRequest({
+      collectionId: first.collectionId,
+      folderId: first.folderId,
+      requestId: first.id,
+      request: {
+        name: first.name,
+        method: first.method,
+        url: first.url,
+        queryParams: first.queryParams,
+        headers: first.headers,
+        body: first.body,
+        preRequestScript: first.preRequestScript,
+      },
+    });
+  }, [loading, requests]);
+
   const treeData = useMemo(
     () => buildCollectionTree(collections, folders, requests),
     [collections, folders, requests],
@@ -390,12 +424,26 @@ export function CollectionSidebar() {
     collectionId: string,
     folderId: string | null,
   ) => {
-    await requestRepository.create({
+    const created = await requestRepository.create({
       collectionId,
       folderId,
       name: t("tree.newRequestName"),
       method: "GET",
       url: "",
+    });
+    useEditorStore.getState().selectRequest({
+      collectionId: created.collectionId,
+      folderId: created.folderId,
+      requestId: created.id,
+      request: {
+        name: created.name,
+        method: created.method,
+        url: created.url,
+        queryParams: created.queryParams,
+        headers: created.headers,
+        body: created.body,
+        preRequestScript: created.preRequestScript,
+      },
     });
     await load();
   };

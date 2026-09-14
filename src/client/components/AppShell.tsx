@@ -2,6 +2,7 @@ import { TopToolbar } from "./TopToolbar";
 import { CollectionSidebar } from "./CollectionSidebar";
 import { RequestWorkspace } from "./RequestWorkspace";
 import { SettingsDrawer } from "./SettingsDrawer";
+import { HistoryDrawer } from "./HistoryDrawer";
 import type { ThemeMode } from "../theme";
 
 interface AppShellProps {
@@ -10,6 +11,9 @@ interface AppShellProps {
   onOpenSettings: () => void;
   settingsOpen: boolean;
   onCloseSettings: () => void;
+  onOpenHistory: () => void;
+  historyOpen: boolean;
+  onCloseHistory: () => void;
 }
 
 export function AppShell({
@@ -18,6 +22,9 @@ export function AppShell({
   onOpenSettings,
   settingsOpen,
   onCloseSettings,
+  onOpenHistory,
+  historyOpen,
+  onCloseHistory,
 }: AppShellProps) {
   return (
     <div className="app-shell">
@@ -25,6 +32,7 @@ export function AppShell({
         themeMode={themeMode}
         onToggleTheme={onToggleTheme}
         onOpenSettings={onOpenSettings}
+        onOpenHistory={onOpenHistory}
       />
       <div className="app-body">
         <CollectionSidebar />
@@ -33,6 +41,7 @@ export function AppShell({
         </main>
       </div>
       <SettingsDrawer open={settingsOpen} onClose={onCloseSettings} />
+      <HistoryDrawer open={historyOpen} onClose={onCloseHistory} />
     </div>
   );
 }

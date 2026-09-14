@@ -1,6 +1,7 @@
 import { Button, Input, Select } from "antd";
 import {
-  CloseOutlined,
+  LoadingOutlined,
+  SaveOutlined,
   SendOutlined,
   WarningOutlined,
 } from "@ant-design/icons";
@@ -22,12 +23,18 @@ const METHOD_OPTIONS = METHODS.map((method) => ({
 interface RequestToolbarProps {
   onSend: () => void;
   onCancel: () => void;
+  onSave: () => void;
 }
 
-export function RequestToolbar({ onSend, onCancel }: RequestToolbarProps) {
+export function RequestToolbar({
+  onSend,
+  onCancel,
+  onSave,
+}: RequestToolbarProps) {
   const { t } = useTranslation();
   const draft = useEditorStore((state) => state.draft);
   const updateDraft = useEditorStore((state) => state.updateDraft);
+  const selectedRequestId = useEditorStore((state) => state.selectedRequestId);
   const isSending = useRuntimeStore((state) => state.isSending);
   const unresolvedVariables = useRuntimeStore(
     (state) => state.unresolvedVariables,
@@ -54,22 +61,23 @@ export function RequestToolbar({ onSend, onCancel }: RequestToolbarProps) {
         />
         <Button
           type="primary"
-          icon={<SendOutlined />}
-          aria-label={t("request.sendAria")}
+          icon={isSending ? <LoadingOutlined /> : <SendOutlined />}
+          aria-label={
+            isSending ? t("request.cancelAria") : t("request.sendAria")
+          }
           aria-busy={isSending}
-          onClick={onSend}
+          onClick={isSending ? onCancel : onSend}
         >
-          {t("request.send")}
+          {isSending ? t("common.cancel") : t("request.send")}
         </Button>
-        {isSending ? (
-          <Button
-            icon={<CloseOutlined />}
-            aria-label={t("request.cancelAria")}
-            onClick={onCancel}
-          >
-            {t("common.cancel")}
-          </Button>
-        ) : null}
+        <Button
+          icon={<SaveOutlined />}
+          aria-label={t("request.saveAria")}
+          disabled={!selectedRequestId}
+          onClick={onSave}
+        >
+          {t("request.save")}
+        </Button>
       </div>
 
       {unresolvedVariables.length > 0 ? (

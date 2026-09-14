@@ -66,6 +66,9 @@ const zh = {
   "request.sendAria": "发送请求",
   "request.cancelAria": "取消请求",
   "request.unresolved": "未解析的变量：",
+  "request.save": "保存",
+  "request.saveAria": "保存请求",
+  "request.saved": "请求已保存",
 
   // Key-value tables
   "table.name": "名称",
@@ -125,6 +128,13 @@ const zh = {
   "response.pretty": "格式化",
   "response.raw": "原始",
   "curl.copyAria": "复制 curl 命令",
+
+  // History
+  "history.title": "历史记录",
+  "history.empty": "暂无历史记录",
+  "history.clear": "清空",
+  "history.clearConfirm": "清空所有历史记录？",
+  "history.replayAria": "回放 {url}",
 
   // Settings drawer
   "settings.placeholder": "资源限制和工作区设置将在这里显示。",
@@ -188,6 +198,9 @@ const en: Record<keyof typeof zh, string> = {
   "request.sendAria": "Send request",
   "request.cancelAria": "Cancel request",
   "request.unresolved": "Unresolved variables:",
+  "request.save": "Save",
+  "request.saveAria": "Save request",
+  "request.saved": "Request saved",
   "table.name": "Name",
   "table.value": "Value",
   "table.deleteRow": "Delete row",
@@ -233,6 +246,11 @@ const en: Record<keyof typeof zh, string> = {
   "response.pretty": "Pretty",
   "response.raw": "Raw",
   "curl.copyAria": "Copy curl command",
+  "history.title": "History",
+  "history.empty": "No history yet",
+  "history.clear": "Clear",
+  "history.clearConfirm": "Clear all history?",
+  "history.replayAria": "Replay {url}",
   "settings.placeholder": "Resource limits and workspace settings will appear here.",
 };
 
