@@ -3,6 +3,7 @@ import fastify, {
   type FastifyServerOptions,
 } from "fastify";
 import helmet from "@fastify/helmet";
+import fastifyStatic from "@fastify/static";
 import {
   DEFAULT_CONFIG,
   type ServerConfig,
@@ -95,7 +96,17 @@ export async function buildApp(
     });
   });
 
-  app.setNotFoundHandler((_request, reply) => {
+  app.register(helmet);
+
+  if (staticRoot !== undefined) {
+    app.register(fastifyStatic, { root: staticRoot });
+  }
+
+  app.setNotFoundHandler((request, reply) => {
+    const url = request.raw.url ?? "";
+    if (staticRoot !== undefined && !url.startsWith("/api/")) {
+      return reply.sendFile("index.html");
+    }
     reply.status(404).send({
       ok: false,
       error: {
@@ -105,7 +116,6 @@ export async function buildApp(
     });
   });
 
-  app.register(helmet);
   registerHealthRoute(app);
   registerExecuteRoute(app);
 
