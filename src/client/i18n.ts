@@ -205,6 +205,45 @@ const zh = {
   "settings.resetConfirmHint": "请输入 {word} 以确认",
   "settings.resetConfirmAria": "输入确认词",
   "settings.resetDone": "工作区已重置",
+
+  // Docs page
+  "docs.title": "使用文档",
+  "docs.back": "返回",
+  "docs.toc": "目录",
+  "docs.overview.title": "平台简介",
+  "docs.overview.body":
+    "Web Curl 是一个单用户 HTTP 请求调试工具，作为单个 Node.js 进程运行，前端界面与 API 同源部署。所有集合、请求、环境与历史记录都保存在浏览器本地（IndexedDB）中，服务端无状态，仅在需要时校验并执行请求。",
+  "docs.collections.title": "集合 / 文件夹 / 请求",
+  "docs.collections.body":
+    "在左侧树中按 集合 → 文件夹 → 请求 组织接口。右键可新建、重命名、移动、复制或删除；拖动分隔条可调整侧边栏宽度。",
+  "docs.building.title": "构建 HTTP 请求",
+  "docs.building.body":
+    "选择方法、填写 URL，并在下方标签页中配置查询参数、请求头与请求体。请求体支持四种类型：无、文本、JSON、表单编码。",
+  "docs.building.exampleLabel": "请求栏示例",
+  "docs.scripts.title": "预请求脚本",
+  "docs.scripts.body":
+    "在预请求脚本标签页中编写 JavaScript，脚本运行在 QuickJS 沙箱中，无法访问 DOM 或网络。可通过 `pm.globals`、`pm.environment` 读写变量，通过 `pm.request` 修改请求，用 `console.log` 输出日志。执行顺序为：集合 → 文件夹（由外到内）→ 请求。",
+  "docs.environments.title": "环境与变量",
+  "docs.environments.body":
+    "在顶部工具栏管理环境（默认包含正式环境与测试环境）。在 URL、参数、请求头、请求体中使用 `{{变量名}}` 进行替换；未解析的变量会保留原样并显示警告。环境变量优先级高于全局变量。",
+  "docs.response.title": "发送与查看响应",
+  "docs.response.body":
+    "点击发送执行请求，可随时取消。响应区展示状态码、耗时、大小与响应头；正文可在格式化与原始之间切换，并可复制等价的 curl 命令。",
+  "docs.curl.title": "从 curl 导入",
+  "docs.curl.body":
+    "在侧边栏右键文件夹选择「从 curl 导入请求」，粘贴 curl 命令即可生成请求。",
+  "docs.importExport.title": "工作区导入 / 导出",
+  "docs.importExport.body":
+    "通过顶部工具栏的导入 / 导出备份或迁移整个工作区（JSON 格式）。导入会替换当前工作区。",
+  "docs.history.title": "历史记录",
+  "docs.history.body":
+    "保存并运行请求后，其运行记录会出现在历史记录面板，可回放或清空。",
+  "docs.settings.title": "设置",
+  "docs.settings.body":
+    "在设置中调整默认超时、重定向、默认格式化、自动换行与响应渲染上限，也可清空全部数据以重置工作区。",
+  "docs.shortcuts.title": "键盘快捷键",
+  "docs.shortcuts.body":
+    "发送请求：`⌘/Ctrl + Enter`；保存请求：`⌘/Ctrl + S`；取消发送：`Esc`。",
 };
 
 const en: Record<keyof typeof zh, string> = {
@@ -379,6 +418,45 @@ const en: Record<keyof typeof zh, string> = {
   "settings.resetConfirmHint": "Type {word} to confirm",
   "settings.resetConfirmAria": "Confirmation word",
   "settings.resetDone": "Workspace has been reset",
+
+  // Docs page
+  "docs.title": "Documentation",
+  "docs.back": "Back",
+  "docs.toc": "On this page",
+  "docs.overview.title": "Platform overview",
+  "docs.overview.body":
+    "Web Curl is a single-user HTTP debugging tool that runs as one Node.js process, serving the UI and API from the same origin. All collections, requests, environments, and history live in the browser via IndexedDB; the server is stateless and only validates and executes one request at a time.",
+  "docs.collections.title": "Collections, folders, and requests",
+  "docs.collections.body":
+    "Organize requests in the left tree as collections → folders → requests. Right-click to create, rename, move, copy, or delete; drag the divider to resize the sidebar.",
+  "docs.building.title": "Building a request",
+  "docs.building.body":
+    "Pick a method, enter the URL, then configure query params, headers, and body in the tabs below. Bodies support four types: none, text, JSON, and form-urlencoded.",
+  "docs.building.exampleLabel": "Request bar example",
+  "docs.scripts.title": "Pre-request scripts",
+  "docs.scripts.body":
+    "Write JavaScript in the Pre-request Script tab. It runs in a QuickJS sandbox with no DOM or network access. Read and write variables with `pm.globals` and `pm.environment`, mutate the request with `pm.request`, and log with `console.log`. Execution order: collection → folders (outermost first) → request.",
+  "docs.environments.title": "Environments and variables",
+  "docs.environments.body":
+    "Manage environments from the top toolbar (Production and Test ship by default). Use `{{variable}}` in URLs, params, headers, and bodies; unresolved variables stay as-is with a warning. Environment values take precedence over globals.",
+  "docs.response.title": "Sending and inspecting responses",
+  "docs.response.body":
+    "Click Send to execute a request and cancel anytime. The response shows status, duration, size, and headers; switch the body between Pretty and Raw, and copy the equivalent curl command.",
+  "docs.curl.title": "Importing from curl",
+  "docs.curl.body":
+    "Right-click a folder and choose Import from curl, then paste a curl command to generate a request.",
+  "docs.importExport.title": "Workspace import / export",
+  "docs.importExport.body":
+    "Use Import / Export in the top toolbar to back up or migrate the whole workspace as JSON. Importing replaces the current workspace.",
+  "docs.history.title": "History",
+  "docs.history.body":
+    "After saving and running a request, its runs appear in the History panel, where you can replay or clear them.",
+  "docs.settings.title": "Settings",
+  "docs.settings.body":
+    "Adjust default timeout, redirects, pretty-print by default, line wrapping, and the render cap in Settings, or reset the workspace.",
+  "docs.shortcuts.title": "Keyboard shortcuts",
+  "docs.shortcuts.body":
+    "Send: `⌘/Ctrl + Enter`; Save: `⌘/Ctrl + S`; Cancel: `Esc`.",
 };
 
 export type MessageKey = keyof typeof zh;
