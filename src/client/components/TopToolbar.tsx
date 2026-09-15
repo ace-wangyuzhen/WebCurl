@@ -17,6 +17,7 @@ import {
   EnvironmentOutlined,
   MoonOutlined,
   PlusOutlined,
+  ReadOutlined,
   SettingOutlined,
   SunOutlined,
   UploadOutlined,
@@ -34,6 +35,7 @@ interface TopToolbarProps {
   themeMode: ThemeMode;
   onToggleTheme: () => void;
   onOpenSettings: () => void;
+  onOpenDocs: () => void;
 }
 
 interface EnvModalState {
@@ -46,6 +48,7 @@ export function TopToolbar({
   themeMode,
   onToggleTheme,
   onOpenSettings,
+  onOpenDocs,
 }: TopToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t, language } = useTranslation();
@@ -262,6 +265,14 @@ export function TopToolbar({
           />
         </Tooltip>
         <KeyboardShortcutsHint />
+        <Tooltip title={t("docs.title")}>
+          <Button
+            type="text"
+            icon={<ReadOutlined />}
+            aria-label={t("docs.title")}
+            onClick={onOpenDocs}
+          />
+        </Tooltip>
         <Tooltip title={t("toolbar.settings")}>
           <Button
             type="text"

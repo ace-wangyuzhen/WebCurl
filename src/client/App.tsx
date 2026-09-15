@@ -9,6 +9,7 @@ import { buildAntdTheme, type ThemeMode } from "./theme";
 export function App() {
   const [themeMode, setThemeMode] = useState<ThemeMode>("light");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [docsOpen, setDocsOpen] = useState(false);
   const language = useLanguageStore((state) => state.language);
 
   const toggleTheme = useCallback(() => {
@@ -22,6 +23,9 @@ export function App() {
   const openSettings = useCallback(() => setSettingsOpen(true), []);
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
 
+  const openDocs = useCallback(() => setDocsOpen(true), []);
+  const closeDocs = useCallback(() => setDocsOpen(false), []);
+
   return (
     <ConfigProvider
       locale={language === "zh" ? zhCN : enUS}
@@ -33,6 +37,9 @@ export function App() {
         onOpenSettings={openSettings}
         settingsOpen={settingsOpen}
         onCloseSettings={closeSettings}
+        docsOpen={docsOpen}
+        onOpenDocs={openDocs}
+        onCloseDocs={closeDocs}
       />
     </ConfigProvider>
   );

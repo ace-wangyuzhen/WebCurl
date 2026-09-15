@@ -8,6 +8,7 @@ import { TopToolbar } from "./TopToolbar";
 import { CollectionSidebar } from "./CollectionSidebar";
 import { RequestWorkspace } from "./RequestWorkspace";
 import { SettingsDrawer } from "./SettingsDrawer";
+import { DocsPage } from "./DocsPage";
 import { useTranslation } from "../i18n";
 import type { ThemeMode } from "../theme";
 
@@ -17,6 +18,9 @@ interface AppShellProps {
   onOpenSettings: () => void;
   settingsOpen: boolean;
   onCloseSettings: () => void;
+  docsOpen: boolean;
+  onOpenDocs: () => void;
+  onCloseDocs: () => void;
 }
 
 const SIDEBAR_MIN = 200;
@@ -34,6 +38,9 @@ export function AppShell({
   onOpenSettings,
   settingsOpen,
   onCloseSettings,
+  docsOpen,
+  onOpenDocs,
+  onCloseDocs,
 }: AppShellProps) {
   const { t } = useTranslation();
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -93,28 +100,37 @@ export function AppShell({
         themeMode={themeMode}
         onToggleTheme={onToggleTheme}
         onOpenSettings={onOpenSettings}
+        onOpenDocs={onOpenDocs}
       />
       <div
         className="app-body"
         ref={bodyRef}
         style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}
       >
-        <CollectionSidebar />
-        <div
-          className="sidebar-resizer"
-          role="separator"
-          aria-orientation="vertical"
-          aria-label={t("layout.resizeSidebar")}
-          aria-valuenow={sidebarWidth}
-          aria-valuemin={SIDEBAR_MIN}
-          aria-valuemax={SIDEBAR_MAX}
-          tabIndex={0}
-          onPointerDown={startResize}
-          onKeyDown={nudge}
-        />
-        <main className="request-workspace">
-          <RequestWorkspace />
-        </main>
+        {docsOpen ? (
+          <main className="docs-view">
+            <DocsPage onBack={onCloseDocs} />
+          </main>
+        ) : (
+          <>
+            <CollectionSidebar />
+            <div
+              className="sidebar-resizer"
+              role="separator"
+              aria-orientation="vertical"
+              aria-label={t("layout.resizeSidebar")}
+              aria-valuenow={sidebarWidth}
+              aria-valuemin={SIDEBAR_MIN}
+              aria-valuemax={SIDEBAR_MAX}
+              tabIndex={0}
+              onPointerDown={startResize}
+              onKeyDown={nudge}
+            />
+            <main className="request-workspace">
+              <RequestWorkspace />
+            </main>
+          </>
+        )}
       </div>
       <SettingsDrawer open={settingsOpen} onClose={onCloseSettings} />
     </div>
