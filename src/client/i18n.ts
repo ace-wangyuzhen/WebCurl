@@ -146,6 +146,8 @@ const zh = {
   "entity.preScript": "{kind} 预请求脚本",
   "entity.runsCollection": "在此集合的每个请求之前运行。",
   "entity.runsFolder": "在此文件夹的每个请求之前运行。",
+  "entity.save": "保存",
+  "entity.saved": "已保存",
 
   // Collection variables panel
   "vars.globals": "全局变量",
@@ -367,6 +369,8 @@ const en: Record<keyof typeof zh, string> = {
   "entity.preScript": "{kind} Pre-request Script",
   "entity.runsCollection": "Runs before every request in this collection.",
   "entity.runsFolder": "Runs before every request in this folder.",
+  "entity.save": "Save",
+  "entity.saved": "Saved",
   "vars.globals": "Globals",
   "vars.globalsHint": 'Available to scripts as pm.globals.get("name").',
   "vars.environments": "Environments",

@@ -1,4 +1,5 @@
-import { Typography } from "antd";
+import { Button, Typography, message } from "antd";
+import { SaveOutlined } from "@ant-design/icons";
 import { CodeMirrorEditor } from "./CodeMirrorEditor";
 import {
   collectionRepository,
@@ -24,15 +25,24 @@ export function CollectionFolderEditor() {
 
   const handleChange = (script: string) => {
     updateScriptDraft(script);
+  };
+
+  const handleSave = async () => {
     if (selectedFolderId) {
-      void folderRepository.update(selectedFolderId, {
-        preRequestScript: script,
+      await folderRepository.update(selectedFolderId, {
+        preRequestScript: scriptDraft,
       });
     } else if (selectedCollectionId) {
-      void collectionRepository.update(selectedCollectionId, {
-        preRequestScript: script,
+      await collectionRepository.update(selectedCollectionId, {
+        preRequestScript: scriptDraft,
       });
+    } else {
+      return;
     }
+    // Refresh the sidebar so switching back to this node reads the saved
+    // script from the database instead of a stale in-memory copy.
+    useEditorStore.getState().bumpWorkspaceVersion();
+    void message.success(t("entity.saved"));
   };
 
   return (
@@ -40,6 +50,14 @@ export function CollectionFolderEditor() {
       <div className="entity-editor-header">
         <Typography.Title level={4}>{selectedEntityName}</Typography.Title>
         <Typography.Text type="secondary">{preScript}</Typography.Text>
+        <Button
+          icon={<SaveOutlined />}
+          aria-label={t("entity.save")}
+          style={{ marginLeft: "auto" }}
+          onClick={() => void handleSave()}
+        >
+          {t("entity.save")}
+        </Button>
       </div>
       <CodeMirrorEditor
         value={scriptDraft}
