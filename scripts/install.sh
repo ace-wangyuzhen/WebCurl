@@ -4,13 +4,18 @@
 # the background with nohup.
 #
 # Behaviour:
-#   - Downloads a .tar.gz build archive with wget and extracts it.
+#   - Uses BOS_URL when set (downloads the .tar.gz build archive with wget);
+#     otherwise falls back to a local web-curl.tar.gz sitting next to this
+#     script. Then extracts the archive.
 #   - Picks the first free port starting at 8359, incrementing until one is free.
 #   - Runs `node dist/server/index.js` via nohup; stdout/stderr go to app.log and
 #     the background pid is written to app.pid.
 #
 # Configuration (env vars; the archive URL may also be the first argument):
-#   BOS_URL         URL of the .tar.gz build archive (required).
+#   BOS_URL         URL of the .tar.gz build archive. Optional — when unset, the
+#                   local LOCAL_ARCHIVE is used instead.
+#   LOCAL_ARCHIVE   Fallback archive when BOS_URL is unset
+#                   (default: <script dir>/web-curl.tar.gz).
 #   APP_HOME        Download + run directory (default: this script's directory).
 #   PORT_BASE       First port to try (default: 8359).
 #   HOST            Bind + health-check host (default: 0.0.0.0).
@@ -20,7 +25,9 @@
 set -euo pipefail
 
 BOS_URL="${BOS_URL:-${1:-}}"
-APP_HOME="${APP_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APP_HOME="${APP_HOME:-${SCRIPT_DIR}}"
+LOCAL_ARCHIVE="${LOCAL_ARCHIVE:-${SCRIPT_DIR}/web-curl.tar.gz}"
 PORT_BASE="${PORT_BASE:-8359}"
 HOST="${HOST:-0.0.0.0}"
 ENTRY_REL="${ENTRY:-dist/server/index.js}"
@@ -37,25 +44,32 @@ die() { echo "[web-curl] ERROR: $*" >&2; exit 1; }
 command -v node >/dev/null 2>&1 || die "node is not installed."
 NODE_MAJOR="$(node --version | sed -E 's/^v([0-9]+).*/\1/')"
 [ "${NODE_MAJOR}" = "24" ] || die "Web Curl requires Node.js 24. Found: $(node --version)"
-command -v wget >/dev/null 2>&1 || die "wget is not installed."
-[ -n "${BOS_URL}" ] || die "Set BOS_URL (or pass the archive URL as the first argument)."
 
 mkdir -p "${APP_HOME}"
 
-# --- Download & unpack -------------------------------------------------------
-ARCHIVE="${APP_HOME}/$(basename "${BOS_URL%%\?*}")"
-case "${ARCHIVE}" in
-  *.tar.gz | *.tgz) : ;;
-  *) ARCHIVE="${APP_HOME}/web-curl.tar.gz" ;;
-esac
+# --- Acquire the build archive ----------------------------------------------
+if [ -n "${BOS_URL}" ]; then
+  command -v wget >/dev/null 2>&1 || die "wget is not installed."
+  ARCHIVE="${APP_HOME}/$(basename "${BOS_URL%%\?*}")"
+  case "${ARCHIVE}" in
+    *.tar.gz | *.tgz) : ;;
+    *) ARCHIVE="${APP_HOME}/web-curl.tar.gz" ;;
+  esac
 
-log "Downloading ${BOS_URL}"
-# -nv keeps normal output brief but still prints the HTTP status / reason on
-# failure. --no-check-certificate skips TLS hostname/cert verification, which is
-# needed for BOS virtual-hosted URLs whose cert (*.bcebos.com) does not match a
-# multi-level host like <bucket>.bj.bcebos.com.
-wget -nv --no-check-certificate -O "${ARCHIVE}" "${BOS_URL}" ||
-  die "Download failed: ${BOS_URL}"
+  log "Downloading ${BOS_URL}"
+  # -nv keeps normal output brief but still prints the HTTP status / reason on
+  # failure. --no-check-certificate skips TLS hostname/cert verification, which is
+  # needed for BOS virtual-hosted URLs whose cert (*.bcebos.com) does not match a
+  # multi-level host like <bucket>.bj.bcebos.com.
+  wget -nv --no-check-certificate -O "${ARCHIVE}" "${BOS_URL}" ||
+    die "Download failed: ${BOS_URL}"
+else
+  # No BOS URL: fall back to the local archive next to this script.
+  ARCHIVE="${LOCAL_ARCHIVE}"
+  [ -f "${ARCHIVE}" ] ||
+    die "No BOS_URL provided and no local archive at ${ARCHIVE}."
+  log "Using local archive ${ARCHIVE}"
+fi
 
 log "Extracting $(basename "${ARCHIVE}")"
 tar -xzf "${ARCHIVE}" -C "${APP_HOME}" || die "Failed to extract ${ARCHIVE}"
