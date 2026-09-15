@@ -51,6 +51,9 @@ export interface EnvironmentRecord {
   name: string;
   variables: EnvironmentVariable[];
   isActive: boolean;
+  // System defaults (production/test) are created with every collection and
+  // cannot be deleted. Absent on records created before this field existed.
+  isSystem?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -81,6 +84,10 @@ export class WebCurlDatabase extends Dexie {
     });
     this.version(2).stores({
       environments: "id, collectionId",
+    });
+    // v3: index history by requestId so each request can list its own runs.
+    this.version(3).stores({
+      history: "id, createdAt, requestId",
     });
   }
 }

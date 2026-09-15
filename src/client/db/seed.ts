@@ -5,11 +5,7 @@ import {
   type FolderRecord,
   type RequestRecord,
 } from "./database";
-import {
-  collectionRepository,
-  folderRepository,
-  requestRepository,
-} from "./repositories";
+import { collectionRepository, environmentRepository } from "./repositories";
 
 export interface WorkspaceExport {
   version: 1;
@@ -21,38 +17,29 @@ export interface WorkspaceExport {
 
 const EXPORT_VERSION = 1;
 
-export async function seedWorkspaceIfEmpty(): Promise<void> {
-  const existing = await collectionRepository.list();
-  if (existing.length > 0) {
-    return;
+// Names for the two system-default environments created with every collection.
+// UI-driven collection creation localizes these; data-layer backfill falls back
+// to the Chinese defaults.
+export const DEFAULT_PROD_ENV_NAME = "正式环境";
+export const DEFAULT_TEST_ENV_NAME = "测试环境";
+
+// Backfills collections that predate the system-default environments so every
+// collection ends up with production/test. Only touches collections that have
+// no environments at all, so it never disturbs user-created ones.
+export async function ensureDefaultEnvironments(): Promise<void> {
+  const collections = await collectionRepository.list();
+  for (const collection of collections) {
+    const environments = await environmentRepository.listByCollection(
+      collection.id,
+    );
+    if (environments.length === 0) {
+      await environmentRepository.createDefaults(
+        collection.id,
+        DEFAULT_PROD_ENV_NAME,
+        DEFAULT_TEST_ENV_NAME,
+      );
+    }
   }
-
-  const collection = await collectionRepository.create({
-    name: "Example",
-    description: "Example requests created on first launch",
-    preRequestScript: "",
-  });
-
-  const folder = await folderRepository.create({
-    collectionId: collection.id,
-    parentId: null,
-    name: "Getting Started",
-    preRequestScript: "",
-    sortOrder: 0,
-  });
-
-  await requestRepository.create({
-    collectionId: collection.id,
-    folderId: folder.id,
-    name: "Example",
-    method: "GET",
-    url: "https://httpbin.org/get",
-    queryParams: [],
-    headers: [],
-    body: { type: "none", content: "" },
-    preRequestScript: "",
-    sortOrder: 0,
-  });
 }
 
 export async function exportWorkspace(): Promise<WorkspaceExport> {
@@ -69,6 +56,42 @@ export async function exportWorkspace(): Promise<WorkspaceExport> {
     folders,
     requests,
     environments,
+  };
+}
+
+export interface ExportSelection {
+  collectionIds: string[];
+  folderIds: string[];
+  requestIds: string[];
+}
+
+// Exports only the picked collections/folders/requests. Callers are expected to
+// include the structural parents of anything they pick (the collection that
+// owns a folder, the folder that owns a request) so the result imports cleanly.
+// Environments follow their collection.
+export async function exportWorkspaceSubset(
+  selection: ExportSelection,
+): Promise<WorkspaceExport> {
+  const collectionIds = new Set(selection.collectionIds);
+  const folderIds = new Set(selection.folderIds);
+  const requestIds = new Set(selection.requestIds);
+
+  const [allCollections, allFolders, allRequests, allEnvironments] =
+    await Promise.all([
+      db.collections.toArray(),
+      db.folders.toArray(),
+      db.requests.toArray(),
+      db.environments.toArray(),
+    ]);
+
+  return {
+    version: EXPORT_VERSION,
+    collections: allCollections.filter((item) => collectionIds.has(item.id)),
+    folders: allFolders.filter((item) => folderIds.has(item.id)),
+    requests: allRequests.filter((item) => requestIds.has(item.id)),
+    environments: allEnvironments.filter((item) =>
+      collectionIds.has(item.collectionId),
+    ),
   };
 }
 

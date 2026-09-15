@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { message } from "antd";
 import { RequestToolbar } from "./RequestToolbar";
 import { RequestTabs } from "./RequestTabs";
@@ -168,7 +168,7 @@ export function RequestWorkspace() {
       const response = await executeRequest(executed, controller.signal);
       runtime.finishSend(response);
 
-      if (response.ok) {
+      if (response.ok && selectedRequestId) {
         try {
           await historyRepository.add({
             requestId: selectedRequestId,
@@ -183,6 +183,12 @@ export function RequestWorkspace() {
       runtime.failSend(normalizeError(error));
     } finally {
       abortControllerRef.current = null;
+      // Keep this run attached to its request so switching away and back shows
+      // it again. Ad-hoc requests (no id) can't be keyed, so they stay only
+      // until the next selection change.
+      if (selectedRequestId) {
+        useRuntimeStore.getState().persistSnapshot(selectedRequestId);
+      }
     }
   }, []);
 
@@ -203,8 +209,52 @@ export function RequestWorkspace() {
       body: draft.body,
       preRequestScript: draft.preRequestScript,
     });
+    // Refresh the sidebar/folder caches so reselecting this request reads the
+    // saved values instead of the stale copy loaded when the tree was built.
+    useEditorStore.getState().bumpWorkspaceVersion();
     void message.success(t("request.saved"));
   }, [t]);
+
+  // Global keyboard shortcuts for the request page. These are scoped to the
+  // request view so they never fire while the collection/folder editor is open.
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const { selectedRequestId, selectedCollectionId, selectedFolderId } =
+        useEditorStore.getState();
+      const onRequestPage =
+        selectedRequestId !== null ||
+        (selectedCollectionId === null && selectedFolderId === null);
+      if (!onRequestPage) {
+        return;
+      }
+
+      const mod = event.metaKey || event.ctrlKey;
+      if (mod && event.key.toLowerCase() === "s") {
+        // Intercept the browser's "save page" dialog and save the request.
+        event.preventDefault();
+        void handleSave();
+      } else if (mod && event.key === "Enter") {
+        event.preventDefault();
+        void handleSend();
+      } else if (
+        event.key === "Escape" &&
+        useRuntimeStore.getState().isSending
+      ) {
+        handleCancel();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleSave, handleSend, handleCancel]);
+
+  // Switching the open request restores that request's last run (or clears the
+  // panel if it has none), so a response stays attached to the request it came
+  // from instead of leaking onto the next one. Snapshots live in memory only,
+  // so a hard refresh or a new browser session starts clean.
+  useEffect(() => {
+    useRuntimeStore.getState().restoreSnapshot(selectedRequestId);
+  }, [selectedRequestId]);
 
   if (!selectedRequestId && (selectedCollectionId || selectedFolderId)) {
     return (

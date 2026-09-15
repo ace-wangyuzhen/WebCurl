@@ -15,7 +15,6 @@ import {
   DownloadOutlined,
   EditOutlined,
   EnvironmentOutlined,
-  HistoryOutlined,
   MoonOutlined,
   PlusOutlined,
   SettingOutlined,
@@ -24,16 +23,17 @@ import {
 } from "@ant-design/icons";
 import type { EnvironmentRecord } from "../db/database";
 import { environmentRepository } from "../db/repositories";
-import { exportWorkspace, importWorkspace } from "../db/seed";
+import { importWorkspace } from "../db/seed";
 import { useLanguageStore, useTranslation } from "../i18n";
 import { useEditorStore } from "../state/editor-store";
 import type { ThemeMode } from "../theme";
+import { KeyboardShortcutsHint } from "./KeyboardShortcutsHint";
+import { ExportDialog } from "./ExportDialog";
 
 interface TopToolbarProps {
   themeMode: ThemeMode;
   onToggleTheme: () => void;
   onOpenSettings: () => void;
-  onOpenHistory: () => void;
 }
 
 interface EnvModalState {
@@ -46,7 +46,6 @@ export function TopToolbar({
   themeMode,
   onToggleTheme,
   onOpenSettings,
-  onOpenHistory,
 }: TopToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t, language } = useTranslation();
@@ -63,6 +62,7 @@ export function TopToolbar({
   const [deleteEnvTarget, setDeleteEnvTarget] = useState<EnvironmentRecord | null>(
     null,
   );
+  const [exportOpen, setExportOpen] = useState(false);
 
   const loadEnvironments = useCallback(async () => {
     if (!selectedCollectionId) {
@@ -120,21 +120,12 @@ export function TopToolbar({
       return;
     }
     setDeleteEnvTarget(null);
+    // System defaults are protected; ignore any stray delete request.
+    if (deleteEnvTarget.isSystem) {
+      return;
+    }
     await environmentRepository.remove(deleteEnvTarget.id);
     useEditorStore.getState().bumpWorkspaceVersion();
-  };
-
-  const handleExport = async () => {
-    const data = await exportWorkspace();
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = "web-curl-workspace.json";
-    anchor.click();
-    URL.revokeObjectURL(url);
   };
 
   const handleImport = async (file: File | undefined) => {
@@ -190,12 +181,17 @@ export function TopToolbar({
                       label: t("env.rename"),
                       icon: <EditOutlined />,
                     },
-                    {
-                      key: "delete",
-                      label: t("env.delete"),
-                      icon: <DeleteOutlined />,
-                      danger: true,
-                    },
+                    // System defaults (production/test) can't be deleted.
+                    ...(activeEnvironment.isSystem
+                      ? []
+                      : [
+                          {
+                            key: "delete",
+                            label: t("env.delete"),
+                            icon: <DeleteOutlined />,
+                            danger: true,
+                          },
+                        ]),
                   ]
                 : []),
             ],
@@ -258,17 +254,10 @@ export function TopToolbar({
             type="text"
             icon={<DownloadOutlined />}
             aria-label={t("toolbar.export")}
-            onClick={() => void handleExport()}
+            onClick={() => setExportOpen(true)}
           />
         </Tooltip>
-        <Tooltip title={t("history.title")}>
-          <Button
-            type="text"
-            icon={<HistoryOutlined />}
-            aria-label={t("history.title")}
-            onClick={onOpenHistory}
-          />
-        </Tooltip>
+        <KeyboardShortcutsHint />
         <Tooltip title={t("toolbar.settings")}>
           <Button
             type="text"
@@ -333,6 +322,8 @@ export function TopToolbar({
       >
         <Typography.Paragraph>{t("env.deleteDesc")}</Typography.Paragraph>
       </Modal>
+
+      <ExportDialog open={exportOpen} onClose={() => setExportOpen(false)} />
     </header>
   );
 }

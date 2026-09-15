@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Empty, Space, Tag, Typography } from "antd";
+import { Button, Empty, Space, Tag, Typography, message } from "antd";
 import { CloseCircleFilled, CopyOutlined } from "@ant-design/icons";
 import { useRuntimeStore } from "../state/runtime-store";
 import { useSettingsStore } from "../state/settings-store";
@@ -77,6 +77,49 @@ function languageFromContentType(contentType: string): EditorLanguage {
   return "text";
 }
 
+// Writes text to the clipboard. The async Clipboard API only exists in secure
+// contexts (HTTPS or localhost), so over plain HTTP — for example when this app
+// is reached through a LAN IP — we fall back to a temporary textarea plus
+// execCommand, which works everywhere.
+async function copyText(text: string): Promise<void> {
+  if (typeof navigator.clipboard?.writeText === "function") {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // Fall through to the legacy path below.
+    }
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+
+  const selection = document.getSelection();
+  const previousRange =
+    selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+
+  textarea.select();
+  textarea.setSelectionRange(0, textarea.value.length);
+
+  try {
+    if (!document.execCommand("copy")) {
+      throw new Error("Copy command failed");
+    }
+  } finally {
+    document.body.removeChild(textarea);
+    if (selection) {
+      selection.removeAllRanges();
+      if (previousRange) {
+        selection.addRange(previousRange);
+      }
+    }
+  }
+}
+
 export function ResponsePanel() {
   const { t } = useTranslation();
   const activeResponse = useRuntimeStore((state) => state.activeResponse);
@@ -90,9 +133,10 @@ export function ResponsePanel() {
   const copyBody = async () => {
     const body = activeResponse?.body ?? "";
     try {
-      await navigator.clipboard.writeText(body);
+      await copyText(body);
+      void message.success(t("common.copied"));
     } catch {
-      // Clipboard access is unavailable; the user can still select the text.
+      void message.error(t("common.copyFailed"));
     }
   };
 
@@ -101,9 +145,19 @@ export function ResponsePanel() {
       return;
     }
     try {
-      await navigator.clipboard.writeText(activeCurl);
+      await copyText(activeCurl);
+      void message.success(t("common.copied"));
     } catch {
-      // Clipboard access is unavailable; the user can still select the text.
+      void message.error(t("common.copyFailed"));
+    }
+  };
+
+  const copyTextValue = async (value: string) => {
+    try {
+      await copyText(value);
+      void message.success(t("common.copied"));
+    } catch {
+      void message.error(t("common.copyFailed"));
     }
   };
 
@@ -188,8 +242,32 @@ export function ResponsePanel() {
                 key={`${header.name}-${index}`}
                 className="response-header-row"
               >
-                <span className="response-header-name">{header.name}</span>
-                <span className="response-header-value">{header.value}</span>
+                <div className="response-header-cell">
+                  <span className="response-header-name">{header.name}</span>
+                  <Button
+                    type="text"
+                    size="small"
+                    className="response-header-copy"
+                    icon={<CopyOutlined />}
+                    aria-label={t("response.copyHeaderNameAria", {
+                      name: header.name,
+                    })}
+                    onClick={() => void copyTextValue(header.name)}
+                  />
+                </div>
+                <div className="response-header-cell">
+                  <span className="response-header-value">{header.value}</span>
+                  <Button
+                    type="text"
+                    size="small"
+                    className="response-header-copy"
+                    icon={<CopyOutlined />}
+                    aria-label={t("response.copyHeaderValueAria", {
+                      name: header.name,
+                    })}
+                    onClick={() => void copyTextValue(header.value)}
+                  />
+                </div>
               </div>
             ))}
           </div>

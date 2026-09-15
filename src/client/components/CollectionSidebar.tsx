@@ -35,6 +35,7 @@ import type {
 } from "../db/database";
 import {
   collectionRepository,
+  environmentRepository,
   folderRepository,
   requestRepository,
 } from "../db/repositories";
@@ -809,7 +810,14 @@ export function CollectionSidebar() {
   };
 
   const createCollection = async () => {
-    await collectionRepository.create({ name: t("tree.newCollectionName") });
+    const collection = await collectionRepository.create({
+      name: t("tree.newCollectionName"),
+    });
+    await environmentRepository.createDefaults(
+      collection.id,
+      t("env.defaultProd"),
+      t("env.defaultTest"),
+    );
     await load();
   };
 
@@ -881,7 +889,15 @@ export function CollectionSidebar() {
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             description={t("tree.noCollections")}
-          />
+          >
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => void createCollection()}
+            >
+              {t("tree.newCollection")}
+            </Button>
+          </Empty>
         ) : (
           <Tree
             blockNode

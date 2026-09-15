@@ -1,14 +1,17 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { App } from "./App";
-import { seedWorkspaceIfEmpty } from "./db/seed";
+import { ensureDefaultEnvironments } from "./db/seed";
 import "./app.css";
 import "./styles/tokens.css";
 
 try {
-  await seedWorkspaceIfEmpty();
+  // No demo data is seeded; the workspace starts empty and the user creates
+  // their own collections. This only backfills default environments for any
+  // collection that lacks them (e.g. imported data).
+  await ensureDefaultEnvironments();
 } catch {
-  // Seeding is best-effort; the app still renders with an empty workspace.
+  // Best-effort; the app still renders with an empty workspace.
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

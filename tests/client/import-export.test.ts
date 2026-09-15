@@ -4,11 +4,7 @@ import {
   environmentRepository,
   requestRepository,
 } from "../../src/client/db/repositories";
-import {
-  exportWorkspace,
-  importWorkspace,
-  seedWorkspaceIfEmpty,
-} from "../../src/client/db/seed";
+import { exportWorkspace, importWorkspace } from "../../src/client/db/seed";
 import {
   createCollectionInput,
   createRequestInput,
@@ -75,14 +71,4 @@ it("rejects malformed records without writing any data", async () => {
   const collections = await collectionRepository.list();
   expect(collections).toHaveLength(1);
   expect(collections[0].id).toBe(collection.id);
-});
-
-it("seeds an empty workspace only once", async () => {
-  await seedWorkspaceIfEmpty();
-  const first = await collectionRepository.list();
-  expect(first).toHaveLength(1);
-  expect(first[0].name).toBe("Example");
-
-  await seedWorkspaceIfEmpty();
-  expect(await collectionRepository.list()).toHaveLength(1);
 });

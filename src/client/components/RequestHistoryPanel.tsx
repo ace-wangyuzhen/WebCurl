@@ -1,18 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { Button, Drawer, Empty, Popconfirm, Spin, Tag } from "antd";
+import { Button, Empty, Popconfirm, Spin, Tag } from "antd";
 import { ClearOutlined } from "@ant-design/icons";
 import type { HistoryRecord } from "../db/database";
 import { historyRepository } from "../db/repositories";
-import type { ExecuteRequest } from "../../shared/contracts";
-import type { RequestDraft } from "../state/editor-store";
 import { useEditorStore } from "../state/editor-store";
 import { useRuntimeStore } from "../state/runtime-store";
 import { useTranslation } from "../i18n";
-
-interface HistoryDrawerProps {
-  open: boolean;
-  onClose: () => void;
-}
 
 function statusTone(status: number | null): "success" | "warning" | "error" {
   if (status === null) {
@@ -25,18 +18,6 @@ function statusTone(status: number | null): "success" | "warning" | "error" {
     return "warning";
   }
   return "error";
-}
-
-function snapshotToDraft(snapshot: ExecuteRequest): RequestDraft {
-  return {
-    name: "",
-    method: snapshot.method,
-    url: snapshot.url,
-    queryParams: snapshot.query,
-    headers: snapshot.headers,
-    body: snapshot.body,
-    preRequestScript: "",
-  };
 }
 
 function formatTime(iso: string): string {
@@ -52,65 +33,76 @@ function formatTime(iso: string): string {
   });
 }
 
-export function HistoryDrawer({ open, onClose }: HistoryDrawerProps) {
+export function RequestHistoryPanel() {
   const { t } = useTranslation();
+  const selectedRequestId = useEditorStore((state) => state.selectedRequestId);
+  // Reload whenever a new response lands so a fresh run shows up immediately.
+  const activeResponse = useRuntimeStore((state) => state.activeResponse);
+
   const [records, setRecords] = useState<HistoryRecord[]>([]);
   const [loading, setLoading] = useState(false);
 
   const load = useCallback(async () => {
+    if (!selectedRequestId) {
+      setRecords([]);
+      return;
+    }
     setLoading(true);
     try {
-      setRecords(await historyRepository.list(100));
+      setRecords(await historyRepository.listByRequest(selectedRequestId, 100));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedRequestId]);
 
   useEffect(() => {
-    if (open) {
-      void load();
-    }
-  }, [open, load]);
+    void load();
+  }, [load, activeResponse]);
 
-  const replay = (record: HistoryRecord) => {
-    useEditorStore
-      .getState()
-      .loadRequestDraft(snapshotToDraft(record.requestSnapshot));
+  const view = (record: HistoryRecord) => {
     useRuntimeStore.getState().showResponse(record.responseSnapshot);
-    onClose();
   };
 
   const clear = async () => {
-    await historyRepository.clear();
+    if (!selectedRequestId) {
+      return;
+    }
+    await historyRepository.clearByRequest(selectedRequestId);
     await load();
   };
 
+  if (!selectedRequestId) {
+    return (
+      <div className="request-history">
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={t("history.unsavedHint")}
+        />
+      </div>
+    );
+  }
+
   return (
-    <Drawer
-      title={t("history.title")}
-      placement="right"
-      size={440}
-      open={open}
-      onClose={onClose}
-      extra={
-        records.length > 0 ? (
+    <div className="request-history">
+      {records.length > 0 ? (
+        <div className="request-history-bar">
           <Popconfirm
-            title={t("history.clearConfirm")}
+            title={t("history.clearRequestConfirm")}
             onConfirm={() => void clear()}
           >
             <Button size="small" icon={<ClearOutlined />}>
               {t("history.clear")}
             </Button>
           </Popconfirm>
-        ) : null
-      }
-    >
+        </div>
+      ) : null}
+
       {loading ? (
         <Spin />
       ) : records.length === 0 ? (
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description={t("history.empty")}
+          description={t("history.emptyRequest")}
         />
       ) : (
         <div className="history-list">
@@ -121,7 +113,7 @@ export function HistoryDrawer({ open, onClose }: HistoryDrawerProps) {
                 key={record.id}
                 type="button"
                 className="history-item"
-                onClick={() => replay(record)}
+                onClick={() => view(record)}
                 aria-label={t("history.replayAria", {
                   url: record.requestSnapshot.url,
                 })}
@@ -153,6 +145,6 @@ export function HistoryDrawer({ open, onClose }: HistoryDrawerProps) {
           })}
         </div>
       )}
-    </Drawer>
+    </div>
   );
 }

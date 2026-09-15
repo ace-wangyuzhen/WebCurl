@@ -166,6 +166,7 @@ export interface EnvironmentInput {
   name: string;
   variables?: EnvironmentVariable[];
   isActive?: boolean;
+  isSystem?: boolean;
 }
 
 type EnvironmentPatch = Partial<
@@ -180,11 +181,35 @@ export const environmentRepository = {
       name: input.name,
       variables: input.variables ?? [],
       isActive: input.isActive ?? false,
+      isSystem: input.isSystem ?? false,
       createdAt: nowIso(),
       updatedAt: nowIso(),
     };
     await db.environments.add(record);
     return record;
+  },
+
+  // Every collection ships with two undeletable system environments. The test
+  // environment is active by default so requests don't hit production unless
+  // the user deliberately switches.
+  async createDefaults(
+    collectionId: string,
+    prodName: string,
+    testName: string,
+  ): Promise<EnvironmentRecord[]> {
+    const prod = await environmentRepository.create({
+      collectionId,
+      name: prodName,
+      isSystem: true,
+      isActive: false,
+    });
+    const test = await environmentRepository.create({
+      collectionId,
+      name: testName,
+      isSystem: true,
+      isActive: true,
+    });
+    return [prod, test];
   },
 
   async get(id: string): Promise<EnvironmentRecord | undefined> {
@@ -236,7 +261,23 @@ export const historyRepository = {
     return db.history.orderBy("createdAt").reverse().limit(limit).toArray();
   },
 
+  async listByRequest(
+    requestId: string,
+    limit: number,
+  ): Promise<HistoryRecord[]> {
+    const records = await db.history
+      .where("requestId")
+      .equals(requestId)
+      .toArray();
+    records.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+    return records.slice(0, limit);
+  },
+
   async clear(): Promise<void> {
     await db.history.clear();
+  },
+
+  async clearByRequest(requestId: string): Promise<void> {
+    await db.history.where("requestId").equals(requestId).delete();
   },
 };
