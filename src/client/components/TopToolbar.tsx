@@ -148,9 +148,13 @@ export function TopToolbar({
   return (
     <header className="top-toolbar">
       <div className="brand">
-        <span className="brand-mark" aria-hidden="true">
-          {"$"}
-        </span>
+        <img
+          className="brand-mark"
+          src="/favicon.svg"
+          alt=""
+          width={28}
+          height={28}
+        />
         <h1 className="brand-name">Web Curl</h1>
       </div>
 
