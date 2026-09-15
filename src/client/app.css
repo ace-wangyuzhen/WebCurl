@@ -47,7 +47,8 @@ body {
 .app-shell {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background: var(--app-bg);
   color: var(--ink);
 }
@@ -188,6 +189,30 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   padding: 12px 8px 16px;
+}
+
+/* Drag handle for resizing the sidebar. It straddles the sidebar's right
+ * border so widening the hit area doesn't shift the columns. */
+.sidebar-resizer {
+  flex: 0 0 6px;
+  width: 6px;
+  margin: 0 -3px;
+  z-index: 3;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.sidebar-resizer:hover,
+.sidebar-resizer:focus-visible,
+body.is-resizing .sidebar-resizer {
+  background: var(--accent-soft);
+  outline: none;
+}
+
+body.is-resizing {
+  cursor: col-resize;
+  user-select: none;
 }
 
 .collection-sidebar-header {
@@ -1064,6 +1089,10 @@ body {
     border-right: none;
     border-bottom: 1px solid var(--border-color);
     max-height: 40vh;
+  }
+
+  .sidebar-resizer {
+    display: none;
   }
 
   .request-workspace {
