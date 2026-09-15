@@ -125,6 +125,7 @@ export function ResponsePanel() {
   const activeResponse = useRuntimeStore((state) => state.activeResponse);
   const activeError = useRuntimeStore((state) => state.activeError);
   const activeCurl = useRuntimeStore((state) => state.activeCurl);
+  const scriptLogs = useRuntimeStore((state) => state.scriptLogs);
   const prettyByDefault = useSettingsStore((state) => state.prettyByDefault);
   const wrapLines = useSettingsStore((state) => state.wrapLines);
   const maxRenderBytes = useSettingsStore((state) => state.maxRenderBytes);
@@ -225,6 +226,24 @@ export function ResponsePanel() {
           {activeResponse?.sizeBytes} bytes
         </Typography.Text>
       </div>
+
+      {scriptLogs.length > 0 ? (
+        <section className="response-section">
+          <div className="response-section-header">
+            <Typography.Title level={5}>{t("script.logs")}</Typography.Title>
+            <Typography.Text type="secondary">
+              {scriptLogs.length}
+            </Typography.Text>
+          </div>
+          <div className="script-logs" role="log" aria-label={t("script.logs")}>
+            {scriptLogs.map((log, index) => (
+              <div key={index} className="script-log-line">
+                {log}
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="response-section">
         <div className="response-section-header">
