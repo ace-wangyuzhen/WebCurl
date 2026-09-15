@@ -212,7 +212,7 @@ const zh = {
   "docs.toc": "目录",
   "docs.overview.title": "平台简介",
   "docs.overview.body":
-    "Web Curl 是一个单用户 HTTP 请求调试工具，作为单个 Node.js 进程运行，前端界面与 API 同源部署。所有集合、请求、环境与历史记录都保存在浏览器本地（IndexedDB）中，服务端无状态，仅在需要时校验并执行请求。",
+    "Web Curl 是一个单用户 HTTP 请求调试工具，作为单个 Node.js 进程运行，前端界面与 API 同源部署。所有集合、请求、环境与历史记录都保存在浏览器本地（IndexedDB）中，服务端无状态，一次仅校验并执行一个请求。",
   "docs.collections.title": "集合 / 文件夹 / 请求",
   "docs.collections.body":
     "在左侧树中按 集合 → 文件夹 → 请求 组织接口。右键可新建、重命名、移动、复制或删除；拖动分隔条可调整侧边栏宽度。",
