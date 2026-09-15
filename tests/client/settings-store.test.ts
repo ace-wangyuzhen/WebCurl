@@ -12,7 +12,7 @@ it("exposes the documented default settings", () => {
   expect(state.defaultTimeoutMs).toBe(30_000);
   expect(state.followRedirects).toBe(true);
   expect(state.maxRedirects).toBe(5);
-  expect(state.prettyByDefault).toBe(false);
+  expect(state.prettyByDefault).toBe(true);
   expect(state.wrapLines).toBe(true);
   expect(state.maxRenderBytes).toBe(2 * 1024 * 1024);
 });

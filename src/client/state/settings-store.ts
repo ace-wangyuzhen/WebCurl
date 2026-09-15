@@ -17,7 +17,7 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   defaultTimeoutMs: 30_000,
   followRedirects: true,
   maxRedirects: 5,
-  prettyByDefault: false,
+  prettyByDefault: true,
   wrapLines: true,
   maxRenderBytes: 2 * 1024 * 1024,
 };
@@ -38,6 +38,16 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: SETTINGS_STORAGE_KEY,
+      // v1 makes formatted responses the default. Older installs persisted the
+      // previous `false`, so upgrade them once instead of leaving them stuck.
+      version: 1,
+      migrate: (persisted, version) => {
+        const state = (persisted ?? {}) as Partial<Settings>;
+        if (version < 1) {
+          return { ...state, prettyByDefault: true } as Settings;
+        }
+        return state as Settings;
+      },
       // Only persist the settings values, not the action functions.
       partialize: (state) => ({
         defaultTimeoutMs: state.defaultTimeoutMs,

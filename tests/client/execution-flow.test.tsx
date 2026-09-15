@@ -4,6 +4,7 @@ import { App } from "../../src/client/App";
 import { db } from "../../src/client/db/database";
 import { useEditorStore } from "../../src/client/state/editor-store";
 import { useRuntimeStore } from "../../src/client/state/runtime-store";
+import { useSettingsStore } from "../../src/client/state/settings-store";
 
 beforeEach(async () => {
   await Promise.all(db.tables.map((table) => table.clear()));
@@ -44,6 +45,10 @@ it("runs scripts before sending and renders the response", async () => {
       sizeBytes: 11,
     }),
   } as unknown as Response);
+
+  // Assert on the raw, single-line body so this test doesn't depend on the
+  // pretty-printer (which is on by default and would reflow the JSON).
+  useSettingsStore.getState().updateSettings({ prettyByDefault: false });
 
   render(<App />);
 
