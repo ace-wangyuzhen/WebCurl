@@ -182,9 +182,15 @@ export function CollectionSidebar() {
   );
   const workspaceVersion = useEditorStore((state) => state.workspaceVersion);
   const cancelledRef = useRef(false);
+  // The spinner should only appear on the very first load. Later refreshes
+  // (e.g. after saving a request bumps workspaceVersion) update the tree in
+  // place instead of flashing a loading state.
+  const hasLoadedRef = useRef(false);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    if (!hasLoadedRef.current) {
+      setLoading(true);
+    }
     setError(null);
     try {
       const collections = await collectionRepository.list();
@@ -212,6 +218,7 @@ export function CollectionSidebar() {
     } finally {
       if (!cancelledRef.current) {
         setLoading(false);
+        hasLoadedRef.current = true;
       }
     }
   }, [t]);
